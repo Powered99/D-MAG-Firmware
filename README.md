@@ -1,4 +1,4 @@
-# This is the dev branch! The project might crash, not compile or be buggy! For useage, please switch to the stable branch for the latest functional release!
+# This is the dev branch! The project might crash, not compile or be buggy! For usage, please switch to the stable branch for the latest functional release!
 
 # D-MAG-Firmware
 A vastly configurable Flux-Gate-Magnetometer firmware for the Raspberry Pi Pico used to read from up to 4 FGM3+ fluxgate magnetometers (via PWM or ADC).
