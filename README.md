@@ -5,7 +5,7 @@ The D-MAG-Firmware is still **in early development** and has **only been publish
 Therefor, it is **NOT MEANT FOR PUBLIC USE** yet!
 
 
-# Features:
+## Features:
 - Read up to 4 PWM FGM3+ sensors, which output a frequency range
 - Read up to 4 Analog FGM3+ sensors, which output a voltage range
 - (Auto-detect sensors on non-disabled channels)
@@ -30,8 +30,8 @@ You can still use it though! - If you do, please credit me in your project if yo
 
 
 
-# Usage:
-## Connect components:
+## Usage:
+### Connect components:
 
 ST7735 Display
 - SCK  -> 18
@@ -56,7 +56,7 @@ Buttons
 - Button Select -> 26
 - Button Right -> 27
 
-### Sensors:
+**Sensors:**
 *(For 5V pwm sensors, make sure to use a level shifter!)*
 
 Frequency / PWM sensors
@@ -72,18 +72,18 @@ Analog [FAST MODE] sensors [WIP] *Button pins have to be rewired, for now: testi
 - Sensor 3 -> (unsupported on the official Pico)
 
 
-## Compile & Upload code
+### Compile & Upload code
 Use VSCode with the Raspberry Pi Pico extension to compile and flash the code.
 Make sure your Pico is in BOOTSEL mode for flashing!
 
 
 
 
-# Credits:
-## D-MAG-Firmware
+## Credits:
+### D-MAG-Firmware
 D-MAG-Firmware by Dominik Kultys
 
-## Third party libraries:
+### Third party libraries:
 ads1x15: https://github.com/gavinlyonsrepo/ADS1x15_PICO
 
 ds3231: https://github.com/antgon/pico-ds3231
