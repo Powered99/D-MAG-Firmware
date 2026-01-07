@@ -1,7 +1,7 @@
 # This is the dev branch! The project might crash, not compile or be buggy! For usage, please switch to the stable branch for the latest functional release!
 
 # D-MAG-Firmware
-A vastly configurable Flux-Gate-Magnetometer firmware for the Raspberry Pi Pico used to read from up to 4 FGM3+ fluxgate magnetometers (via PWM or ADC).
+A vastly configurable Flux-Gate-Magnetometer firmware for the Raspberry Pi Pico (RP2040) used to read from up to 4 FGM3+ fluxgate magnetometers (via PWM or ADC).
 
 The D-MAG-Firmware is still **in early development** and has **only been published to show its current progress!**
 Therefor, it is **NOT MEANT FOR PUBLIC USE** yet!
@@ -35,43 +35,53 @@ You can still use it though! - If you do, please credit me in your project if yo
 ## Usage:
 ### Connect components:
 
-ST7735 Display
-- SCK  -> 18
-- TX   -> 19
-- RX   -> 16
-- CS   -> 17
-- DC   -> 20
-- RST  -> 21
+## ST7735 Display (SPI0)
+| Signal | GPIO |
+|--------|------|
+| SCK    | 18   |
+| TX     | 19   |
+| RX     | 16   |
+| CS     | 17   |
+| DC     | 20   |
+| RST    | 21   |
 
-SD Card
-- SCK  -> 10
-- TX   -> 11
-- RX   -> 12
-- CS   -> 13
+## SD Card (SPI1)
+| Signal | GPIO |
+|--------|------|
+| SCK    | 10   |
+| TX     | 11   |
+| RX     | 12   |
+| CS     | 13   |
 
-RTC DS3231
-- SDA  -> 14
-- SCL  -> 15
+**RTC (DS3231, I2C1)**
+| Signal | GPIO |
+|--------|------|
+| SDA    | 14   |
+| SCL    | 15   |
 
-Buttons
-- Button Left -> 22
-- Button Select -> 26
-- Button Right -> 27
+**Buttons**
+| Button | GPIO |
+|--------|------|
+| LEFT   | 22   |
+| SELECT | 26   |
+| RIGHT  | 27   |
 
-**Sensors:**
-*(For 5V pwm sensors, make sure to use a level shifter!)*
+### Sensors
+**Frequency Sensors**
+| Sensor | GPIO |
+|--------|------|
+| CH0    | 9    |
+| CH1    | 7    |
+| CH2    | 5    |
+| CH3    | 3    |
 
-Frequency / PWM sensors
-- Sensor 0 -> 9
-- Sensor 1 -> 7
-- Sensor 2 -> 5
-- Sensor 3 -> 3
-
-Analog [FAST MODE] sensors [WIP] *Button pins have to be rewired, for now: testing only!*
-- Sensor 0 -> 26
-- Sensor 1 -> 27
-- Sensor 2 -> 28
-- Sensor 3 -> (unsupported on the official Pico)
+### Analog Sensors
+| Sensor | GPIO |
+|--------|------|
+| CH0    | 26   |
+| CH1    | 27   |
+| CH2    | 28   |
+| CH3    |  -   | *unavailable un the official Pi PICO*
 
 
 ### Compile & Upload code
