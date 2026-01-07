@@ -34,7 +34,7 @@ You can still use it though! - If you do, please credit me in your project if yo
 ## D-MAG-Firmware
 D-MAG-Firmware by Dominik Kultys
 
-## Libraries:
+## Third party libraries:
 ads1x15: https://github.com/gavinlyonsrepo/ADS1x15_PICO
 
 ds3231: https://github.com/antgon/pico-ds3231
