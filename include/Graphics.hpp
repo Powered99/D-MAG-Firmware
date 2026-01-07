@@ -1,3 +1,11 @@
+/*
+ * D-MAG-Firmware
+ * Copyright (c) 2026 Dominik Kultys
+ *
+ * Licensed under the Apache v2.0 License.
+ * See LICENSE file in the project root for full license information.
+ */
+
 #pragma once
 
 #include "pico/stdlib.h"
