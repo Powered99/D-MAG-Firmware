@@ -24,6 +24,18 @@ Therefor, it is **NOT MEANT FOR PUBLIC USE** yet!
 - Compatibility with EAS-based DIY sensors over the ADC fast mode
 - I2C ADS1115 ADC compatibility
 
-Also please keep in mind that this is just some software I made for private use.
-You can still use it if you like though! - Just please make sure to credit me if you're planning on publishing the project.
-As it's one of the many projects im working on, some of these features could take a longer time to complete or never see the light of day at all.
+Please keep in mind that this is currently being developed for private use, which could mean,
+that some of these upcoming features or bugs could take a long time to or never become finished or fixed.
+
+You can still use it though! - If you do, please credit me in your project if you're publishing it / it's documentation.
+
+
+# Credits:
+## D-MAG-Firmware
+D-MAG-Firmware by Dominik Kultys
+
+## Libraries:
+ads1x15: https://github.com/gavinlyonsrepo/ADS1x15_PICO
+ds3231: https://github.com/antgon/pico-ds3231
+displaylib_16: https://github.com/gavinlyonsrepo/displaylib_16bit_PICO
+fatfs library: https://github.com/carlk3/no-OS-FatFS-SD-SPI-RPi-Pico
