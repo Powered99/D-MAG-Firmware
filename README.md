@@ -34,6 +34,9 @@ D-MAG-Firmware by Dominik Kultys
 
 ## Libraries:
 ads1x15: https://github.com/gavinlyonsrepo/ADS1x15_PICO
+
 ds3231: https://github.com/antgon/pico-ds3231
+
 displaylib_16: https://github.com/gavinlyonsrepo/displaylib_16bit_PICO
+
 fatfs library: https://github.com/carlk3/no-OS-FatFS-SD-SPI-RPi-Pico
