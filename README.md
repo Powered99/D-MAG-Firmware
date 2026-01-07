@@ -7,7 +7,7 @@ The D-MAG-Firmware is still **in early development** and has **only been publish
 Therefor, it is **NOT MEANT FOR PUBLIC USE** yet!
 
 
-## Features:
+# Features:
 - Read up to 4 PWM FGM3+ sensors, which output a frequency range
 - Read up to 4 Analog FGM3+ sensors, which output a voltage range
 - (Auto-detect sensors on non-disabled channels)
@@ -17,7 +17,7 @@ Therefor, it is **NOT MEANT FOR PUBLIC USE** yet!
 - Configure multiple settings / factors (like sample count (median sample count setting is yet to be implemented!)) at runtime.
 
 
-## Upcoming features I'm working on:
+# Upcoming features I'm working on:
 
 - Running measurements on CORE #1 (to avoid overhead from other system components, thus improving precision and speed)
 - Saving settings / sensor calibrations in NVM (Non-volatile-memory, probably flash or SD)
@@ -32,10 +32,10 @@ You can still use it though! - If you do, please credit me in your project if yo
 
 
 
-## Usage:
-### Connect components:
+# Usage:
+## Connect components:
 
-## ST7735 Display (SPI0)
+### ST7735 Display (SPI0)
 | Signal | GPIO |
 |--------|------|
 | SCK    | 18   |
@@ -45,7 +45,7 @@ You can still use it though! - If you do, please credit me in your project if yo
 | DC     | 20   |
 | RST    | 21   |
 
-## SD Card (SPI1)
+### SD Card (SPI1)
 | Signal | GPIO |
 |--------|------|
 | SCK    | 10   |
@@ -53,13 +53,13 @@ You can still use it though! - If you do, please credit me in your project if yo
 | RX     | 12   |
 | CS     | 13   |
 
-**RTC (DS3231, I2C1)**
+### RTC (DS3231, I2C1)
 | Signal | GPIO |
 |--------|------|
 | SDA    | 14   |
 | SCL    | 15   |
 
-**Buttons**
+### Buttons
 | Button | GPIO |
 |--------|------|
 | LEFT   | 22   |
