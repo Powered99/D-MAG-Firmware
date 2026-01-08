@@ -66,7 +66,7 @@ You can still use it though! - If you do, please credit me in your project if yo
 | SELECT | 26   |
 | RIGHT  | 27   |
 
-### Frequency Sensors**
+### Frequency Sensors
 | Sensor | GPIO |
 |--------|------|
 | CH0    | 9    |
@@ -81,22 +81,20 @@ You can still use it though! - If you do, please credit me in your project if yo
 | CH0    | 26   |
 | CH1    | 27   |
 | CH2    | 28   |
-| CH3    |  -   |
-*4th ADC unavailable on the official Pi PICO board*
+| CH3    |  *Unavailable on official PICO*   |
 
 
-### Compile & Upload code
+## Compile & Upload code
 Use VSCode with the Raspberry Pi Pico extension to compile and flash the code.
 Make sure your Pico is in BOOTSEL mode for flashing!
 
 
 
 
-## Credits:
-### D-MAG-Firmware
-D-MAG-Firmware by Dominik Kultys
+# Credits:
+## D-MAG-Firmware by Dominik Kultys
 
-### Third party libraries:
+## Third party libraries:
 ads1x15: https://github.com/gavinlyonsrepo/ADS1x15_PICO
 
 ds3231: https://github.com/antgon/pico-ds3231
