@@ -66,8 +66,7 @@ You can still use it though! - If you do, please credit me in your project if yo
 | SELECT | 26   |
 | RIGHT  | 27   |
 
-### Sensors
-**Frequency Sensors**
+### Frequency Sensors**
 | Sensor | GPIO |
 |--------|------|
 | CH0    | 9    |
@@ -76,12 +75,14 @@ You can still use it though! - If you do, please credit me in your project if yo
 | CH3    | 3    |
 
 ### Analog Sensors
+*Hardware wiring [WIP]! Buttons have to be rewired for this (include/pins.h)!*
 | Sensor | GPIO |
 |--------|------|
 | CH0    | 26   |
 | CH1    | 27   |
 | CH2    | 28   |
-| CH3    |  -   | *unavailable un the official Pi PICO*
+| CH3    |  -   |
+*4th ADC unavailable on the official Pi PICO board*
 
 
 ### Compile & Upload code
