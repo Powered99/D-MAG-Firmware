@@ -1,11 +1,11 @@
 # D-MAG-Firmware
-A vastly configurable Flux-Gate-Magnetometer firmware for the Raspberry Pi Pico used to read from up to 4 FGM3+ fluxgate magnetometers (via PWM or ADC).
+A vastly configurable Flux-Gate-Magnetometer firmware for the Raspberry Pi Pico (RP2040) used to read from up to 4 FGM3+ fluxgate magnetometers (via PWM or ADC).
 
 The D-MAG-Firmware is still **in early development** and has **only been published to show its current progress!**
 Therefor, it is **NOT MEANT FOR PUBLIC USE** yet!
 
 
-## Features:
+# Features:
 - Read up to 4 PWM FGM3+ sensors, which output a frequency range
 - Read up to 4 Analog FGM3+ sensors, which output a voltage range
 - (Auto-detect sensors on non-disabled channels)
@@ -15,7 +15,7 @@ Therefor, it is **NOT MEANT FOR PUBLIC USE** yet!
 - Configure multiple settings / factors (like sample count (median sample count setting is yet to be implemented!)) at runtime.
 
 
-## Upcoming features I'm working on:
+# Upcoming features I'm working on:
 
 - Running measurements on CORE #1 (to avoid overhead from other system components, thus improving precision and speed)
 - Saving settings / sensor calibrations in NVM (Non-volatile-memory, probably flash or SD)
@@ -30,60 +30,69 @@ You can still use it though! - If you do, please credit me in your project if yo
 
 
 
-## Usage:
-### Connect components:
+# Usage:
+## Connect components:
 
-ST7735 Display
-- SCK  -> 18
-- TX   -> 19
-- RX   -> 16
-- CS   -> 17
-- DC   -> 20
-- RST  -> 21
+### ST7735 Display (SPI0)
+| Signal | GPIO |
+|--------|------|
+| SCK    | 18   |
+| TX     | 19   |
+| RX     | 16   |
+| CS     | 17   |
+| DC     | 20   |
+| RST    | 21   |
 
-SD Card
-- SCK  -> 10
-- TX   -> 11
-- RX   -> 12
-- CS   -> 13
+### SD Card (SPI1)
+| Signal | GPIO |
+|--------|------|
+| SCK    | 10   |
+| TX     | 11   |
+| RX     | 12   |
+| CS     | 13   |
 
-RTC DS3231
-- SDA  -> 14
-- SCL  -> 15
+### RTC (DS3231, I2C1)
+| Signal | GPIO |
+|--------|------|
+| SDA    | 14   |
+| SCL    | 15   |
 
-Buttons
-- Button Left -> 22
-- Button Select -> 26
-- Button Right -> 27
+### Buttons
+| Button | GPIO |
+|--------|------|
+| LEFT   | 22   |
+| SELECT | 26   |
+| RIGHT  | 27   |
 
-**Sensors:**
-*(For 5V pwm sensors, make sure to use a level shifter!)*
+### Frequency Sensors
+| Sensor | GPIO |
+|--------|------|
+| CH0    | 9    |
+| CH1    | 7    |
+| CH2    | 5    |
+| CH3    | 3    |
 
-Frequency / PWM sensors
-- Sensor 0 -> 9
-- Sensor 1 -> 7
-- Sensor 2 -> 5
-- Sensor 3 -> 3
-
-Analog [FAST MODE] sensors [WIP] *Button pins have to be rewired, for now: testing only!*
-- Sensor 0 -> 26
-- Sensor 1 -> 27
-- Sensor 2 -> 28
-- Sensor 3 -> (unsupported on the official Pico)
+### Analog Sensors
+*Hardware wiring [WIP]! Buttons have to be rewired for this (include/pins.h)!*
+| Sensor | GPIO |
+|--------|------|
+| CH0    | 26   |
+| CH1    | 27   |
+| CH2    | 28   |
+| CH3    |  *Unavailable on official PICO*   |
 
 
-### Compile & Upload code
+## Compile & Upload code
 Use VSCode with the Raspberry Pi Pico extension to compile and flash the code.
 Make sure your Pico is in BOOTSEL mode for flashing!
 
 
 
 
-## Credits:
-### D-MAG-Firmware
-D-MAG-Firmware by Dominik Kultys
+# Credits:
+## D-MAG-Firmware by Dominik Kultys
 
-### Third party libraries:
+## Third party libraries:
 ads1x15: https://github.com/gavinlyonsrepo/ADS1x15_PICO
 
 ds3231: https://github.com/antgon/pico-ds3231
