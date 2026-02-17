@@ -43,15 +43,15 @@ SENSOR_STATE SENSOR_STATES[SENSOR_CH_COUNT];
 // Initialized flags for sensor channels
 bool FREQ_INITIALIZED[SENSOR_CH_COUNT]; // frequency (PWM) driver
 bool ANALOG_INITIALIZED[SENSOR_CH_COUNT]; // fast (onboard ADC) analog driver
-bool I2C_INITIALIZED[SENSOR_CH_COUNT]; // precise (ADS1115) analog driver
+bool I2C_INITIALIZED[SENSOR_CH_COUNT]; // 3rd-harmonic based sensor driver (via I2C)
 
 bool adc_initialized = false; // ADC initialized flag
 
 CALIB_DATA SENSOR_CALIBRATIONS[SENSOR_CH_COUNT]; // Sensor calibration data (MIN, MAX values) // TODO: load/save from non-volatile memory
 
-uint SET_SAMPLE_COUNT[SENSOR_CH_COUNT] = {128}; // Configured sample count buffer
+uint SET_SAMPLE_COUNT[SENSOR_CH_COUNT] = {256}; // Configured sample count buffer
 uint SAMPLE_COUNT[SENSOR_CH_COUNT]; // Actual sample count used by the driver
-uint MEDIAN_SAMPLE_OFFSET[SENSOR_CH_COUNT] = {4}; // Offset of median samples (MEDIAN_SAMPLE_OFFSET <- center -> MEDIAN_SAMPLE_OFFSET), total median samples: 2x offset
+uint MEDIAN_SAMPLE_OFFSET[SENSOR_CH_COUNT] = {8}; // Offset of median samples (MEDIAN_SAMPLE_OFFSET <- center -> MEDIAN_SAMPLE_OFFSET), total median samples: 2x offset
 
 absolute_time_t last_pwm_read_timestamp[SENSOR_CH_COUNT];
 uint16_t sample_index[SENSOR_CH_COUNT] = {0};
@@ -91,7 +91,7 @@ void init_sensor(size_t ch, SENSOR_MODE mode){
         FREQ_INITIALIZED[ch] = true;
     
     // Fast (onboard ADC) analog driver
-    }else if (SENSOR_MODES[ch] == SENSOR_MODE::ANALOG_FAST){
+    }else if (SENSOR_MODES[ch] == SENSOR_MODE::ANALOG){
         if(!adc_initialized) adc_init(); adc_initialized = true;
         if (ANALOG_INITIALIZED[ch]) return; // Don't reinitialize ADC
         
@@ -103,7 +103,7 @@ void init_sensor(size_t ch, SENSOR_MODE mode){
         ANALOG_INITIALIZED[ch] = true;
     
     // Precise (ADS1115) analog driver
-    }else if (SENSOR_MODES[ch] == SENSOR_MODE::ANALOG_PRECISE){
+    }else if (SENSOR_MODES[ch] == SENSOR_MODE::HARMONIC){
         return; // Precise W.I.P.
     }
     load_sample_count(ch); // Load default or configured sample count
@@ -190,8 +190,8 @@ void read_sensors(){
         if (SENSOR_STATES[ch] == SENSOR_STATE::DISABLED) continue; // Dont read from disabled sensors
         
         if (SENSOR_MODES[ch] == SENSOR_MODE::FREQ && FREQ_INITIALIZED[ch]) read_sensor_freq(ch); // Frequency driver   
-        else if (SENSOR_MODES[ch] == SENSOR_MODE::ANALOG_FAST && ANALOG_INITIALIZED[ch]) read_sensor_adc(ch); // Analog driver
-        else if (SENSOR_MODES[ch] == SENSOR_MODE::ANALOG_PRECISE && I2C_INITIALIZED[ch]) continue; // TODO: I2C Precise analog driver
+        else if (SENSOR_MODES[ch] == SENSOR_MODE::ANALOG && ANALOG_INITIALIZED[ch]) read_sensor_adc(ch); // Analog driver
+        else if (SENSOR_MODES[ch] == SENSOR_MODE::HARMONIC && I2C_INITIALIZED[ch]) continue; // TODO: 3rd harmonic driver W.I.P. (via I2C)
     }
     
 }
@@ -204,10 +204,10 @@ void calculate_nT(uint8_t ch){
         case SENSOR_MODE::FREQ:
             result_tesla = B_MIN + (periods[ch] - ch_data.MIN) * slope; // Result in tesla
             break;
-        case SENSOR_MODE::ANALOG_FAST:
+        case SENSOR_MODE::ANALOG:
             result_tesla = B_MIN + (voltages[ch] - ch_data.MIN) * slope; // Result in tesla
             break;
-        case SENSOR_MODE::ANALOG_PRECISE: // TODO: I2C Precise analog driver
+        case SENSOR_MODE::HARMONIC: // TODO: 3rd harmonic driver W.I.P. (via I2C)
             break;
         };
     float result_nT = result_tesla * 1e9f; // Result in nT

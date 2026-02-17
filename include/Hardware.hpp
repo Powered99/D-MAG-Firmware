@@ -30,8 +30,8 @@ namespace fgm{
     enum class SENSOR_MODE: int8_t {
         DISABLED = -1,
         FREQ = 0,
-        ANALOG_PRECISE = 1,
-        ANALOG_FAST = 2
+        HARMONIC = 1,
+        ANALOG = 2
     };
     enum class SENSOR_STATE : int8_t {
         DISABLED = -1,

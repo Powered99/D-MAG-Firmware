@@ -347,13 +347,13 @@ namespace settings{
                             ch_color = positive_text_color;  
                             mode_text = (char*)"Frequency";
                             break;
-                        case fgm::SENSOR_MODE::ANALOG_FAST:
+                        case fgm::SENSOR_MODE::ANALOG:
                             ch_color = positive_text_color; 
-                            mode_text = (char*)"Analog (fast)";
+                            mode_text = (char*)"Analog";
                             break;
-                        case fgm::SENSOR_MODE::ANALOG_PRECISE:
+                        case fgm::SENSOR_MODE::HARMONIC:
                             ch_color = inactive_text_color;
-                            mode_text = (char*)"Analog (precise)[WIP]";
+                            mode_text = (char*)"Harmonic (I2C)[WIP]";
                             break;
                         default:
                             ch_color = setting_text_color;
@@ -460,7 +460,7 @@ namespace settings{
             void calibrate(){
                 uint8_t ch = selected_option;
 
-                float value = fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::FREQ ? fgm::periods[ch] : (fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::ANALOG_FAST || fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::ANALOG_PRECISE) ? fgm::voltages[ch] : 0.0;
+                float value = fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::FREQ ? fgm::periods[ch] : (fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::ANALOG || fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::HARMONIC) ? fgm::voltages[ch] : 0.0;
                 calib_data.MIN = std::min(value, calib_data.MIN);
                 calib_data.MAX = std::max(value, calib_data.MAX);
 
@@ -632,7 +632,6 @@ namespace settings{
                 ctrl::set_enabled(sampling::controls::ctrl_held_decrease_id, false);
                 ctrl::set_enabled(sampling::controls::ctrl_increase_id, true);
                 ctrl::set_enabled(sampling::controls::ctrl_decrease_id, true);
-                
             }
 
             void increase_sample_count(){
@@ -740,6 +739,16 @@ namespace settings{
                 // Interval setting
                 size_t ctrl_increase_id;
                 size_t ctrl_decrease_id;
+
+                size_t ctrl_held_increase_id;
+                size_t ctrl_held_decrease_id;
+
+                size_t ctrl_increase_hold_id;
+                size_t ctrl_decrease_hold_id;
+
+                size_t ctrl_increase_release_id;
+                size_t ctrl_decrease_release_id;
+
                 void add_controls(){
                     ctrl_next_id = ctrl::connect(ctrl::BUTTON_t::BTN_LEFT, ctrl::BTN_EVENT_t::BTN_PRESSED, next_option);
                     ctrl_prev_id = ctrl::connect(ctrl::BUTTON_t::BTN_RIGHT, ctrl::BTN_EVENT_t::BTN_PRESSED, prev_option);
@@ -748,6 +757,25 @@ namespace settings{
                     ctrl_increase_id = ctrl::connect(ctrl::BUTTON_t::BTN_RIGHT, ctrl::BTN_EVENT_t::BTN_PRESSED, increase_interval);
                     ctrl_decrease_id = ctrl::connect(ctrl::BUTTON_t::BTN_LEFT, ctrl::BTN_EVENT_t::BTN_PRESSED, decrease_interval);
 
+                    ctrl_held_increase_id = ctrl::connect(ctrl::BUTTON_t::BTN_RIGHT, ctrl::BTN_EVENT_t::BTN_DOWN, increase_interval);
+                    ctrl_held_decrease_id = ctrl::connect(ctrl::BUTTON_t::BTN_LEFT, ctrl::BTN_EVENT_t::BTN_DOWN, decrease_interval);
+
+                    ctrl_increase_hold_id = ctrl::connect(ctrl::BUTTON_t::BTN_RIGHT, ctrl::BTN_EVENT_t::BTN_HOLD, speed_up);
+                    ctrl_decrease_hold_id = ctrl::connect(ctrl::BUTTON_t::BTN_LEFT, ctrl::BTN_EVENT_t::BTN_HOLD, speed_up);
+
+                    ctrl_increase_release_id = ctrl::connect(ctrl::BUTTON_t::BTN_RIGHT, ctrl::BTN_EVENT_t::BTN_RELEASED, reset_speed);
+                    ctrl_decrease_release_id = ctrl::connect(ctrl::BUTTON_t::BTN_LEFT, ctrl::BTN_EVENT_t::BTN_RELEASED, reset_speed);
+
+                    ctrl::set_enabled(ctrl_increase_id, false);
+                    ctrl::set_enabled(ctrl_decrease_id, false);
+
+                    ctrl::set_enabled(ctrl_held_increase_id, false);
+                    ctrl::set_enabled(ctrl_held_decrease_id, false);
+
+                    ctrl::set_enabled(ctrl_increase_hold_id, false);
+                    ctrl::set_enabled(ctrl_decrease_hold_id, false);
+                    ctrl::set_enabled(ctrl_increase_release_id, false);
+                    ctrl::set_enabled(ctrl_decrease_release_id, false);
                     ctrl::set_enabled(ctrl_increase_id, false);
                     ctrl::set_enabled(ctrl_decrease_id, false);
                 }
@@ -768,6 +796,21 @@ namespace settings{
             int interval;
             uint32_t interval_change_amount = 100;
             
+            void speed_up(){
+                interval_change_amount = 1000;
+                ctrl::set_enabled(settings::log::interval::controls::ctrl_increase_id, false);
+                ctrl::set_enabled(settings::log::interval::controls::ctrl_decrease_id, false);
+                ctrl::set_enabled(settings::log::interval::controls::ctrl_held_increase_id, true);
+                ctrl::set_enabled(settings::log::interval::controls::ctrl_held_decrease_id, true);
+            }
+            void reset_speed(){
+                interval_change_amount = 100;
+                ctrl::set_enabled(settings::log::interval::controls::ctrl_held_increase_id, false);
+                ctrl::set_enabled(settings::log::interval::controls::ctrl_held_decrease_id, false);
+                ctrl::set_enabled(settings::log::interval::controls::ctrl_increase_id, true);
+                ctrl::set_enabled(settings::log::interval::controls::ctrl_decrease_id, true);
+            }
+
             void apply_interval(){
                 logger::set_log_interval((uint32_t)interval);
             }
@@ -996,7 +1039,7 @@ void draw_channel_page(size_t ch){
     }
     
     // 'Channel {x} (@GPIO{y})
-    uint PIN = (fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::ANALOG_FAST || fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::ANALOG_PRECISE) ? SENSOR_PINS_ANALOG[ch] : fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::FREQ ? SENSOR_PINS_FREQ[ch] : -1;
+    uint PIN = (fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::ANALOG || fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::HARMONIC) ? SENSOR_PINS_ANALOG[ch] : fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::FREQ ? SENSOR_PINS_FREQ[ch] : -1;
     if(PIN == -1){
         snprintf(buf, sizeof(buf), "Channel %d (N/C)", ch+1);
     }else{
@@ -1020,8 +1063,8 @@ void draw_channel_page(size_t ch){
 
         prev_mag_len = gfx::smart_text(buf, 0, status_bar_margin + title_margin + subtitle_margin, font, positive_text_color, prev_mag_len, font_width, font_height);
 
-        char* value_text = fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::FREQ ? (char*)"Freq: %.4f kHz" : (fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::ANALOG_FAST || fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::ANALOG_PRECISE) ? (char*)"Volt.: %.4f V" : (char*)"No value";
-        float value = fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::FREQ ? fgm::frequencies[ch] / 1000.0f : (fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::ANALOG_FAST || fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::ANALOG_PRECISE) ? fgm::voltages[ch] : -1.0f;
+        char* value_text = fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::FREQ ? (char*)"Freq: %.4f kHz" : (fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::ANALOG || fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::HARMONIC) ? (char*)"Sample.: %.4f" : (char*)"No value";
+        float value = fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::FREQ ? fgm::frequencies[ch] / 1000.0f : (fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::ANALOG || fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::HARMONIC) ? fgm::voltages[ch] : -1.0f;
         // 'Freq: {x.xx} Hz'
         snprintf(buf, sizeof(buf), value_text, value);
 
