@@ -22,6 +22,8 @@ namespace logger{
     }
 
     fs::SD_STATUS start_logging(){
+        fs::init_sd();
+
         if(!fs::sd_available){
             logging_status = LOG_STATUS::ERROR;
             return fs::SD_STATUS::SD_ERR;
@@ -63,6 +65,7 @@ namespace logger{
         fs::close_file();
         if(logging_status == LOG_STATUS::ERROR) return;
         logging_status = LOG_STATUS::IDLE;
+        fs::unmount_sd();
     }
     void log(){
         char buf[100];
