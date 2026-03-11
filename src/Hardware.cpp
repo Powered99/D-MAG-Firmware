@@ -214,22 +214,32 @@ void read_sensors(){
     readings[ch] = result_nT;
 }*/
 
+void calculate_calib(uint8_t ch){
+    CALIB_DATA ch_data = SENSOR_CALIBRATIONS[ch];
+    ch_data.offset = (ch_data.MAX + ch_data.MIN) / 2.0;
+    ch_data.slope = (B_MAX - B_MIN) / (ch_data.MAX - ch_data.MIN);
+}
+
 void calculate_nT(uint8_t ch){
     CALIB_DATA ch_data = SENSOR_CALIBRATIONS[ch];
-    float result_tesla;
-    float offset = (ch_data.MAX + ch_data.MIN) / 2.0;
-    float slope = (B_MAX - B_MIN) / (ch_data.MAX - ch_data.MIN);
 
+    double B_measured = 0.0f;
     switch(SENSOR_MODES[ch]){
         case SENSOR_MODE::FREQ:
-            result_tesla = (periods[ch] - offset) * slope; // Result in tesla
+            B_measured = periods[ch];
             break;
         case SENSOR_MODE::ANALOG:
-            result_tesla = (voltages[ch] - offset) * slope; // Result in tesla
+            B_measured = voltages[ch];
             break;
         case SENSOR_MODE::HARMONIC: // TODO: 3rd harmonic driver W.I.P. (via I2C)
             break;
-    };
+        default:
+            break;
+    }
+    double result_tesla = (B_measured - ch_data.offset) * ch_data.slope;
+
+    double result_nT = result_tesla * 1e9f; // Result in nT
+    readings[ch] = result_nT;
 }
 
 float get_nT(uint8_t ch){
@@ -249,10 +259,12 @@ void set_sensor_modes(SENSOR_MODE modes[SENSOR_CH_COUNT]){
 
 void set_sensor_calib(uint8_t ch, CALIB_DATA calib_data){
     SENSOR_CALIBRATIONS[ch] = calib_data;
+    calculate_calib(ch);
 }
 void set_sensor_calibs(CALIB_DATA calib_data[SENSOR_CH_COUNT]){
     for(int ch = 0; ch < SENSOR_CH_COUNT; ch++){
         SENSOR_CALIBRATIONS[ch] = calib_data[ch];
+        calculate_calib(ch);
     }
 }
 

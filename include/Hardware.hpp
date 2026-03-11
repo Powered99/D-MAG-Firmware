@@ -44,6 +44,8 @@ namespace fgm{
     struct CALIB_DATA{
         float MIN = 8.5e-6f;
         float MAX = 25e-6f;
+        double offset = 0.0f;
+        double slope = 0.0f;
     };
     struct freq_sample{
         uint64_t delta_t = 0;
