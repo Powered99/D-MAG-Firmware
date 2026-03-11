@@ -196,7 +196,7 @@ void read_sensors(){
     
 }
 
-void calculate_nT(uint8_t ch){
+/*void calculate_nT(uint8_t ch){
     CALIB_DATA ch_data = SENSOR_CALIBRATIONS[ch];
     float result_tesla;
     float slope = (B_MAX - B_MIN) / (ch_data.MAX - ch_data.MIN);
@@ -212,6 +212,24 @@ void calculate_nT(uint8_t ch){
         };
     float result_nT = result_tesla * 1e9f; // Result in nT
     readings[ch] = result_nT;
+}*/
+
+void calculate_nT(uint8_t ch){
+    CALIB_DATA ch_data = SENSOR_CALIBRATIONS[ch];
+    float result_tesla;
+    float offset = (ch_data.MAX + ch_data.MIN) / 2.0;
+    float slope = (B_MAX - B_MIN) / (ch_data.MAX - ch_data.MIN);
+
+    switch(SENSOR_MODES[ch]){
+        case SENSOR_MODE::FREQ:
+            result_tesla = (periods[ch] - offset) * slope; // Result in tesla
+            break;
+        case SENSOR_MODE::ANALOG:
+            result_tesla = (voltages[ch] - offset) * slope; // Result in tesla
+            break;
+        case SENSOR_MODE::HARMONIC: // TODO: 3rd harmonic driver W.I.P. (via I2C)
+            break;
+    };
 }
 
 float get_nT(uint8_t ch){
