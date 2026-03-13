@@ -9,7 +9,7 @@ Therefore, using it can still be buggy and incomplete.
 Its currently being developed for private use, which could mean,
 that some of these upcoming features or bugs could take a long time to or never become finished or fixed.
 
-Feel free to use and modify it however! - If you do, please credit me in your project using the D-MAG-Firmware if you're publishing it / it's documentation.
+Feel free to use and modify it however! - If you do, please credit me in your project if you're publishing it / it's documentation.
 
 # Features:
 - Read up to 4 PWM FGM3+ sensors, which output a frequency range
