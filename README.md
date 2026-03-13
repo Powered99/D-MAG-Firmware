@@ -32,7 +32,7 @@ Feel free to use and modify it however! - If you do, please credit me in your pr
 # Usage:
 ## Connect components:
 The hardware for the D-MAG-Firmware is in constant development as well. This is the pinout for the 2nd revision.
-You can still use previous revisions of the device. You'll have to change the HW_V{version here} definition in the include/pins.h file to apply the corresponding pinout. (Example: For v1; #define HW_V2 -> #define HW_V1).
+You can still use previous revisions of the device but you'll have to change the HW_V{version here} definition in the include/pins.h file to apply the corresponding pinout. (Example: For v1; #define HW_V2 -> #define HW_V1).
 
 ### ST7735 Display (SPI1)
 | Signal | GPIO |
