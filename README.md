@@ -6,6 +6,10 @@ A vastly configurable Flux-Gate-Magnetometer firmware for the Raspberry Pi Pico 
 The D-MAG-Firmware is still **in early development** and has **been published mostly just to show its current progress!**
 Therefore, using it can still be buggy and incomplete.
 
+Its currently being developed for private use, which could mean,
+that some of these upcoming features or bugs could take a long time to or never become finished or fixed.
+
+Feel free to use and modify it however! - If you do, please credit me in your project using the D-MAG-Firmware if you're publishing it / it's documentation.
 
 # Features:
 - Read up to 4 PWM FGM3+ sensors, which output a frequency range
@@ -22,49 +26,47 @@ Therefore, using it can still be buggy and incomplete.
 - Running measurements on CORE #1 (to avoid overhead from other system components, thus improving precision and speed)
 - Saving settings / sensor calibrations in NVM (Non-volatile-memory, probably flash or SD)
 - Some missing or unfinished settings in the settings page (like runtime RTC configuration or median sample count)
-- Compatibility with EAS-based DIY sensors over the ADC fast mode
-- I2C ADS1115 ADC compatibility
-
-Please keep in mind that this is currently being developed for private use, which could mean,
-that some of these upcoming features or bugs could take a long time to or never become finished or fixed.
-
-You can still use it though! - If you do, please credit me in your project if you're publishing it / it's documentation.
-
-
+- Compatibility with EAS-based DIY sensors over I2C
+- Other features, like display power-saving, further optimizations, etc.
 
 # Usage:
 ## Connect components:
+The hardware for the D-MAG-Firmware is in constant development as well. This is the pinout for the 2nd revision.
+You can still use previous revisions of the device. You'll have to change the HW_V{version here} definition in the include/pins.h file to apply the corresponding pinout. (Example: For v1; #define HW_V2 -> #define HW_V1).
 
-### ST7735 Display (SPI0)
-| Signal | GPIO |
-|--------|------|
-| SCK    | 18   |
-| TX     | 19   |
-| RX     | 16   |
-| CS     | 17   |
-| DC     | 20   |
-| RST    | 21   |
-
-### SD Card (SPI1)
+### ST7735 Display (SPI1)
 | Signal | GPIO |
 |--------|------|
 | SCK    | 10   |
 | TX     | 11   |
 | RX     | 12   |
 | CS     | 13   |
+| DC     | 14   |
+| RST    | 15   |
+| BL*    | 8    | 
 
-### RTC (DS3231, I2C1)
+*(BL: Backlight pin, might not be present on some TFT modules. Display powersaving W.I.P.)*
+
+### SD Card (SPI0)
 | Signal | GPIO |
 |--------|------|
-| SDA    | 14   |
-| SCL    | 15   |
+| SCK    | 18   |
+| TX     | 19   |
+| RX     | 16   |
+| CS     | 17   |
+
+### RTC (DS3231, I2C0)
+| Signal | GPIO |
+|--------|------|
+| SDA    | 20   |
+| SCL    | 21   |
 
 ### Buttons
 | Button | GPIO |
 |--------|------|
-| LEFT   | 22   |
-| SELECT | 26   |
-| RIGHT  | 27   |
+| LEFT   | 2   |
+| SELECT | 4   |
+| RIGHT  | 6   |
 
 ### Frequency Sensors
 | Sensor | GPIO |
@@ -75,7 +77,6 @@ You can still use it though! - If you do, please credit me in your project if yo
 | CH3    | 3    |
 
 ### Analog Sensors
-*Hardware wiring [WIP]! Buttons have to be rewired for this (include/pins.h)!*
 | Sensor | GPIO |
 |--------|------|
 | CH0    | 26   |
@@ -85,10 +86,7 @@ You can still use it though! - If you do, please credit me in your project if yo
 
 
 ## Compile & Upload code
-Use VSCode with the Raspberry Pi Pico extension to compile and flash the code.
-Make sure your Pico is in BOOTSEL mode for flashing!
-
-
+Use VSCode with the Raspberry Pi Pico extension to compile and flash the code or copy the build/D-MAG-Firmware.uf2 file onto the Pico in BOOTSEL mode.
 
 
 # Credits:
