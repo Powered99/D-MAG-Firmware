@@ -61,8 +61,8 @@ const int8_t SENSOR_PINS_ANALOG[4] = {26, 27, 28, -1};
 #define TFT_SPI_RX 12
 #define TFT_SPI_CS 13
 
-#define TFT_SPI_DC 14
-#define TFT_SPI_RST 15
+#define TFT_SPI_DC 15
+#define TFT_SPI_RST 14
 
 // TFT Backlight
 #define TFT_BL 8

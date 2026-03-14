@@ -41,8 +41,8 @@ You can still use previous revisions of the device but you'll have to change the
 | TX     | 11   |
 | RX     | 12   |
 | CS     | 13   |
-| DC     | 14   |
-| RST    | 15   |
+| RST    | 14   |
+| DC     | 15   |
 | BL*    | 8    | 
 
 *(BL: Backlight pin, might not be present on some TFT modules. Display powersaving W.I.P.)*
