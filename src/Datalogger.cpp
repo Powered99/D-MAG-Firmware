@@ -65,7 +65,7 @@ namespace logger{
         fs::close_file();
         if(logging_status == LOG_STATUS::ERROR) return;
         logging_status = LOG_STATUS::IDLE;
-        fs::unmount_sd();
+        //fs::unmount_sd();
     }
     void log(){
         char buf[100];

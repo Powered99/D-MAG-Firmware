@@ -253,8 +253,8 @@ namespace settings{
                 size_t ctrl_prev_id;
                 size_t ctrl_select_id;
                 void add_controls(){
-                    settings::fgm_conf::modes::controls::ctrl_next_id = ctrl::connect(ctrl::BUTTON_t::BTN_LEFT, ctrl::BTN_EVENT_t::BTN_PRESSED, next_option);
-                    settings::fgm_conf::modes::controls::ctrl_prev_id = ctrl::connect(ctrl::BUTTON_t::BTN_RIGHT, ctrl::BTN_EVENT_t::BTN_PRESSED, prev_option);
+                    settings::fgm_conf::modes::controls::ctrl_prev_id = ctrl::connect(ctrl::BUTTON_t::BTN_LEFT, ctrl::BTN_EVENT_t::BTN_PRESSED, prev_option);
+                    settings::fgm_conf::modes::controls::ctrl_next_id = ctrl::connect(ctrl::BUTTON_t::BTN_RIGHT, ctrl::BTN_EVENT_t::BTN_PRESSED, next_option);
                     settings::fgm_conf::modes::controls::ctrl_select_id = ctrl::connect(ctrl::BUTTON_t::BTN_SELECT, ctrl::BTN_EVENT_t::BTN_PRESSED, select_option);
                 }
                 void remove_controls(){
@@ -390,8 +390,8 @@ namespace settings{
                 size_t ctrl_prev_id;
                 size_t ctrl_select_id;
                 void add_controls(){
-                    settings::fgm_conf::modes::controls::ctrl_next_id = ctrl::connect(ctrl::BUTTON_t::BTN_LEFT, ctrl::BTN_EVENT_t::BTN_PRESSED, next_option);
-                    settings::fgm_conf::modes::controls::ctrl_prev_id = ctrl::connect(ctrl::BUTTON_t::BTN_RIGHT, ctrl::BTN_EVENT_t::BTN_PRESSED, prev_option);
+                    settings::fgm_conf::modes::controls::ctrl_prev_id = ctrl::connect(ctrl::BUTTON_t::BTN_LEFT, ctrl::BTN_EVENT_t::BTN_PRESSED, prev_option);
+                    settings::fgm_conf::modes::controls::ctrl_next_id = ctrl::connect(ctrl::BUTTON_t::BTN_RIGHT, ctrl::BTN_EVENT_t::BTN_PRESSED, next_option);
                     settings::fgm_conf::modes::controls::ctrl_select_id = ctrl::connect(ctrl::BUTTON_t::BTN_SELECT, ctrl::BTN_EVENT_t::BTN_PRESSED, select_option);
                 }
                 void remove_controls(){
@@ -754,8 +754,8 @@ namespace settings{
                 size_t ctrl_decrease_release_id;
 
                 void add_controls(){
-                    ctrl_next_id = ctrl::connect(ctrl::BUTTON_t::BTN_LEFT, ctrl::BTN_EVENT_t::BTN_PRESSED, next_option);
-                    ctrl_prev_id = ctrl::connect(ctrl::BUTTON_t::BTN_RIGHT, ctrl::BTN_EVENT_t::BTN_PRESSED, prev_option);
+                    ctrl_prev_id = ctrl::connect(ctrl::BUTTON_t::BTN_LEFT, ctrl::BTN_EVENT_t::BTN_PRESSED, prev_option);
+                    ctrl_next_id = ctrl::connect(ctrl::BUTTON_t::BTN_RIGHT, ctrl::BTN_EVENT_t::BTN_PRESSED, next_option);
                     ctrl_select_id = ctrl::connect(ctrl::BUTTON_t::BTN_SELECT, ctrl::BTN_EVENT_t::BTN_PRESSED, select_option);
 
                     ctrl_increase_id = ctrl::connect(ctrl::BUTTON_t::BTN_RIGHT, ctrl::BTN_EVENT_t::BTN_PRESSED, increase_interval);
@@ -975,8 +975,8 @@ namespace settings{
         size_t ctrl_select_id;
 
         void add_controls(){
-            settings::controls::ctrl_next_id = ctrl::connect(ctrl::BUTTON_t::BTN_LEFT, ctrl::BTN_EVENT_t::BTN_PRESSED, prev_setting);
-            settings::controls::ctrl_prev_id = ctrl::connect(ctrl::BUTTON_t::BTN_RIGHT, ctrl::BTN_EVENT_t::BTN_PRESSED, next_setting);
+            settings::controls::ctrl_prev_id = ctrl::connect(ctrl::BUTTON_t::BTN_LEFT, ctrl::BTN_EVENT_t::BTN_PRESSED, prev_setting);
+            settings::controls::ctrl_next_id = ctrl::connect(ctrl::BUTTON_t::BTN_RIGHT, ctrl::BTN_EVENT_t::BTN_PRESSED, next_setting);
             settings::controls::ctrl_select_id = ctrl::connect(ctrl::BUTTON_t::BTN_SELECT, ctrl::BTN_EVENT_t::BTN_PRESSED, select_setting);
         }
         void set_controls(bool enabled){

@@ -88,6 +88,6 @@ const uint8_t BTN_PINS[3] = {2, 4, 6};
 
 // Sensor pins (must be equal to or more than the SENSOR_CH_COUNT)
 const uint8_t SENSOR_PINS_FREQ[4] = {9, 7, 5, 3};
-const int8_t SENSOR_PINS_ANALOG[4] = {26, 27, 28, -1};
+const int8_t SENSOR_PINS_ANALOG[4] = {28, 27, 26, -1};
 
 #endif
