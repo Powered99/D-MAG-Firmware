@@ -561,8 +561,8 @@ namespace settings{
                 size_t ctrl_decrease_release_id;
 
                 void add_controls(){
-                    ctrl_next_id = ctrl::connect(ctrl::BUTTON_t::BTN_LEFT, ctrl::BTN_EVENT_t::BTN_PRESSED, next_option);
-                    ctrl_prev_id = ctrl::connect(ctrl::BUTTON_t::BTN_RIGHT, ctrl::BTN_EVENT_t::BTN_PRESSED, prev_option);
+                    ctrl_next_id = ctrl::connect(ctrl::BUTTON_t::BTN_RIGHT, ctrl::BTN_EVENT_t::BTN_PRESSED, next_option);
+                    ctrl_prev_id = ctrl::connect(ctrl::BUTTON_t::BTN_LEFT, ctrl::BTN_EVENT_t::BTN_PRESSED, prev_option);
                     ctrl_select_id = ctrl::connect(ctrl::BUTTON_t::BTN_SELECT, ctrl::BTN_EVENT_t::BTN_PRESSED, select_option);
 
                     ctrl_increase_id = ctrl::connect(ctrl::BUTTON_t::BTN_RIGHT, ctrl::BTN_EVENT_t::BTN_PRESSED, increase_sample_count);

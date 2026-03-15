@@ -44,12 +44,12 @@ int main()
     rtc::init_rtc();
     
     /*ds3231_datetime_t dt = {
-        .hour = 23,
-        .minutes = 23,
-        .seconds = 30,
-        .day = 6,
-        .dotw = 2,
-        .month = 1,
+        .hour = 13,
+        .minutes = 35,
+        .seconds = 20,
+        .day = 15,
+        .dotw = 7,
+        .month = 3,
         .year = 2026,
     };
 
