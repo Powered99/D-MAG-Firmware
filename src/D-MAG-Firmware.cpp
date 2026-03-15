@@ -36,13 +36,13 @@ int main()
 {
     stdio_init_all();
     
-    
     status::init_led();
+
     fgm::set_sensor_modes((fgm::SENSOR_MODE[fgm::SENSOR_CH_COUNT]){fgm::SENSOR_MODE::FREQ, fgm::SENSOR_MODE::FREQ, fgm::SENSOR_MODE::DISABLED, fgm::SENSOR_MODE::DISABLED});
     fgm::init_sensors();
     disp::init_display();
     rtc::init_rtc();
-
+    
     /*ds3231_datetime_t dt = {
         .hour = 23,
         .minutes = 23,
@@ -57,10 +57,10 @@ int main()
 
     
     fs::init_sd();
-
+    
     ctrl::init_btn();
     ui::init();
-
+    
     while (true) {
         ctrl::handle_events();
         fgm::read_sensors();

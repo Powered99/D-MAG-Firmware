@@ -103,6 +103,8 @@ namespace settings{
             void prev_option();
             void increase_interval();
             void decrease_interval();
+            void speed_up();
+            void reset_speed();
             void exit_edit_interval();
             void init();
             void draw();
@@ -311,8 +313,6 @@ namespace settings{
                 settings::fgm_conf::modes::exit();
             }
             
-
-
             void set_selected_option(uint8_t option){
                 selected_option = option;
             }
@@ -576,14 +576,14 @@ namespace settings{
 
                     ctrl_increase_release_id = ctrl::connect(ctrl::BUTTON_t::BTN_RIGHT, ctrl::BTN_EVENT_t::BTN_RELEASED, reset_speed);
                     ctrl_decrease_release_id = ctrl::connect(ctrl::BUTTON_t::BTN_LEFT, ctrl::BTN_EVENT_t::BTN_RELEASED, reset_speed);
+
                     ctrl::set_enabled(ctrl_increase_id, false);
                     ctrl::set_enabled(ctrl_decrease_id, false);
-
-                    ctrl::set_enabled(ctrl_held_increase_id, false);
-                    ctrl::set_enabled(ctrl_held_decrease_id, false);
-
+                    
                     ctrl::set_enabled(ctrl_increase_hold_id, false);
                     ctrl::set_enabled(ctrl_decrease_hold_id, false);
+                    ctrl::set_enabled(ctrl_held_increase_id, false);
+                    ctrl::set_enabled(ctrl_held_decrease_id, false);
                     ctrl::set_enabled(ctrl_increase_release_id, false);
                     ctrl::set_enabled(ctrl_decrease_release_id, false);
                 }
@@ -595,11 +595,10 @@ namespace settings{
                     ctrl::disconnect(ctrl_increase_id);
                     ctrl::disconnect(ctrl_decrease_id);
 
-                    ctrl::disconnect(ctrl_held_increase_id);
-                    ctrl::disconnect(ctrl_held_decrease_id);
-
                     ctrl::disconnect(ctrl_increase_hold_id);
                     ctrl::disconnect(ctrl_decrease_hold_id);
+                    ctrl::disconnect(ctrl_held_increase_id);
+                    ctrl::disconnect(ctrl_held_decrease_id);
                     ctrl::disconnect(ctrl_increase_release_id);
                     ctrl::disconnect(ctrl_decrease_release_id);
                 }
@@ -623,15 +622,23 @@ namespace settings{
                 change_amount = 5;
                 ctrl::set_enabled(sampling::controls::ctrl_increase_id, false);
                 ctrl::set_enabled(sampling::controls::ctrl_decrease_id, false);
+                ctrl::set_enabled(sampling::controls::ctrl_select_id, false);
+
                 ctrl::set_enabled(sampling::controls::ctrl_held_increase_id, true);
                 ctrl::set_enabled(sampling::controls::ctrl_held_decrease_id, true);
+                ctrl::set_enabled(sampling::controls::ctrl_increase_release_id, true);
+                ctrl::set_enabled(sampling::controls::ctrl_decrease_release_id, true);
             }
             void reset_speed(){
                 change_amount = 1;
-                ctrl::set_enabled(sampling::controls::ctrl_held_increase_id, false);
-                ctrl::set_enabled(sampling::controls::ctrl_held_decrease_id, false);
                 ctrl::set_enabled(sampling::controls::ctrl_increase_id, true);
                 ctrl::set_enabled(sampling::controls::ctrl_decrease_id, true);
+                ctrl::set_enabled(sampling::controls::ctrl_select_id, true);
+
+                ctrl::set_enabled(sampling::controls::ctrl_held_increase_id, false);
+                ctrl::set_enabled(sampling::controls::ctrl_held_decrease_id, false);
+                ctrl::set_enabled(sampling::controls::ctrl_increase_release_id, false);
+                ctrl::set_enabled(sampling::controls::ctrl_decrease_release_id, false);
             }
 
             void increase_sample_count(){
@@ -651,8 +658,7 @@ namespace settings{
 
                 ctrl::set_enabled(sampling::controls::ctrl_increase_hold_id, true);
                 ctrl::set_enabled(sampling::controls::ctrl_decrease_hold_id, true);
-                ctrl::set_enabled(sampling::controls::ctrl_increase_release_id, true);
-                ctrl::set_enabled(sampling::controls::ctrl_decrease_release_id, true);
+
                 editing_sample_count = true;
             }
             void exit_edit_sample_count(){
@@ -663,8 +669,6 @@ namespace settings{
                 ctrl::set_enabled(sampling::controls::ctrl_decrease_id, false);
                 ctrl::set_enabled(sampling::controls::ctrl_increase_hold_id, false);
                 ctrl::set_enabled(sampling::controls::ctrl_decrease_hold_id, false);
-                ctrl::set_enabled(sampling::controls::ctrl_increase_release_id, false);
-                ctrl::set_enabled(sampling::controls::ctrl_decrease_release_id, false);
 
                 editing_sample_count = false;
             }
@@ -757,27 +761,24 @@ namespace settings{
                     ctrl_increase_id = ctrl::connect(ctrl::BUTTON_t::BTN_RIGHT, ctrl::BTN_EVENT_t::BTN_PRESSED, increase_interval);
                     ctrl_decrease_id = ctrl::connect(ctrl::BUTTON_t::BTN_LEFT, ctrl::BTN_EVENT_t::BTN_PRESSED, decrease_interval);
 
-                    ctrl_held_increase_id = ctrl::connect(ctrl::BUTTON_t::BTN_RIGHT, ctrl::BTN_EVENT_t::BTN_DOWN, increase_interval);
-                    ctrl_held_decrease_id = ctrl::connect(ctrl::BUTTON_t::BTN_LEFT, ctrl::BTN_EVENT_t::BTN_DOWN, decrease_interval);
-
                     ctrl_increase_hold_id = ctrl::connect(ctrl::BUTTON_t::BTN_RIGHT, ctrl::BTN_EVENT_t::BTN_HOLD, speed_up);
                     ctrl_decrease_hold_id = ctrl::connect(ctrl::BUTTON_t::BTN_LEFT, ctrl::BTN_EVENT_t::BTN_HOLD, speed_up);
+
+                    ctrl_held_increase_id = ctrl::connect(ctrl::BUTTON_t::BTN_RIGHT, ctrl::BTN_EVENT_t::BTN_DOWN, increase_interval);
+                    ctrl_held_decrease_id = ctrl::connect(ctrl::BUTTON_t::BTN_LEFT, ctrl::BTN_EVENT_t::BTN_DOWN, decrease_interval);
 
                     ctrl_increase_release_id = ctrl::connect(ctrl::BUTTON_t::BTN_RIGHT, ctrl::BTN_EVENT_t::BTN_RELEASED, reset_speed);
                     ctrl_decrease_release_id = ctrl::connect(ctrl::BUTTON_t::BTN_LEFT, ctrl::BTN_EVENT_t::BTN_RELEASED, reset_speed);
 
                     ctrl::set_enabled(ctrl_increase_id, false);
                     ctrl::set_enabled(ctrl_decrease_id, false);
-
-                    ctrl::set_enabled(ctrl_held_increase_id, false);
-                    ctrl::set_enabled(ctrl_held_decrease_id, false);
-
+                    
                     ctrl::set_enabled(ctrl_increase_hold_id, false);
                     ctrl::set_enabled(ctrl_decrease_hold_id, false);
+                    ctrl::set_enabled(ctrl_held_increase_id, false);
+                    ctrl::set_enabled(ctrl_held_decrease_id, false);
                     ctrl::set_enabled(ctrl_increase_release_id, false);
                     ctrl::set_enabled(ctrl_decrease_release_id, false);
-                    ctrl::set_enabled(ctrl_increase_id, false);
-                    ctrl::set_enabled(ctrl_decrease_id, false);
                 }
                 void remove_controls(){
                     ctrl::disconnect(ctrl_next_id);
@@ -786,6 +787,14 @@ namespace settings{
 
                     ctrl::disconnect(ctrl_increase_id);
                     ctrl::disconnect(ctrl_decrease_id);
+
+                    ctrl::disconnect(ctrl_increase_hold_id);
+                    ctrl::disconnect(ctrl_decrease_hold_id);
+                    ctrl::disconnect(ctrl_held_increase_id);
+                    ctrl::disconnect(ctrl_held_decrease_id);
+                    ctrl::disconnect(ctrl_increase_release_id);
+                    ctrl::disconnect(ctrl_decrease_release_id);
+                    
                 }
             }
 
@@ -797,18 +806,27 @@ namespace settings{
             uint32_t interval_change_amount = 100;
             
             void speed_up(){
-                interval_change_amount = 1000;
+                interval_change_amount = 500;
                 ctrl::set_enabled(settings::log::interval::controls::ctrl_increase_id, false);
                 ctrl::set_enabled(settings::log::interval::controls::ctrl_decrease_id, false);
+                ctrl::set_enabled(settings::log::interval::controls::ctrl_select_id, false);
+
                 ctrl::set_enabled(settings::log::interval::controls::ctrl_held_increase_id, true);
                 ctrl::set_enabled(settings::log::interval::controls::ctrl_held_decrease_id, true);
+                ctrl::set_enabled(settings::log::interval::controls::ctrl_increase_release_id, true);
+                ctrl::set_enabled(settings::log::interval::controls::ctrl_decrease_release_id, true);
             }
             void reset_speed(){
                 interval_change_amount = 100;
-                ctrl::set_enabled(settings::log::interval::controls::ctrl_held_increase_id, false);
-                ctrl::set_enabled(settings::log::interval::controls::ctrl_held_decrease_id, false);
                 ctrl::set_enabled(settings::log::interval::controls::ctrl_increase_id, true);
                 ctrl::set_enabled(settings::log::interval::controls::ctrl_decrease_id, true);
+                ctrl::set_enabled(settings::log::interval::controls::ctrl_select_id, true);
+
+                ctrl::set_enabled(settings::log::interval::controls::ctrl_held_increase_id, false);
+                ctrl::set_enabled(settings::log::interval::controls::ctrl_held_decrease_id, false);
+                ctrl::set_enabled(settings::log::interval::controls::ctrl_increase_release_id, false);
+                ctrl::set_enabled(settings::log::interval::controls::ctrl_decrease_release_id, false);
+                
             }
 
             void apply_interval(){
@@ -817,10 +835,11 @@ namespace settings{
 
             void increase_interval(){
                 interval += interval_change_amount;
+                
             }
             void decrease_interval(){
                 interval -= interval_change_amount;
-                interval = std::max(interval, 0);
+                interval = std::max(interval, 100);
             }
             void enter_edit_interval(){
                 ctrl::set_enabled(settings::log::interval::controls::ctrl_next_id, false);
@@ -828,6 +847,8 @@ namespace settings{
 
                 ctrl::set_enabled(settings::log::interval::controls::ctrl_increase_id, true);
                 ctrl::set_enabled(settings::log::interval::controls::ctrl_decrease_id, true);
+                ctrl::set_enabled(settings::log::interval::controls::ctrl_increase_hold_id, true);
+                ctrl::set_enabled(settings::log::interval::controls::ctrl_decrease_hold_id, true);
                 editing_interval = true;
             }
             void exit_edit_interval(){
@@ -836,6 +857,8 @@ namespace settings{
 
                 ctrl::set_enabled(settings::log::interval::controls::ctrl_increase_id, false);
                 ctrl::set_enabled(settings::log::interval::controls::ctrl_decrease_id, false);
+                ctrl::set_enabled(settings::log::interval::controls::ctrl_increase_hold_id, false);
+                ctrl::set_enabled(settings::log::interval::controls::ctrl_decrease_hold_id, false);
                 editing_interval = false;
             }
 
@@ -952,8 +975,8 @@ namespace settings{
         size_t ctrl_select_id;
 
         void add_controls(){
-            settings::controls::ctrl_next_id = ctrl::connect(ctrl::BUTTON_t::BTN_LEFT, ctrl::BTN_EVENT_t::BTN_PRESSED, next_setting);
-            settings::controls::ctrl_prev_id = ctrl::connect(ctrl::BUTTON_t::BTN_RIGHT, ctrl::BTN_EVENT_t::BTN_PRESSED, prev_setting);
+            settings::controls::ctrl_next_id = ctrl::connect(ctrl::BUTTON_t::BTN_LEFT, ctrl::BTN_EVENT_t::BTN_PRESSED, prev_setting);
+            settings::controls::ctrl_prev_id = ctrl::connect(ctrl::BUTTON_t::BTN_RIGHT, ctrl::BTN_EVENT_t::BTN_PRESSED, next_setting);
             settings::controls::ctrl_select_id = ctrl::connect(ctrl::BUTTON_t::BTN_SELECT, ctrl::BTN_EVENT_t::BTN_PRESSED, select_setting);
         }
         void set_controls(bool enabled){
@@ -992,7 +1015,7 @@ namespace settings{
 
 
 void draw_info_page(){
-    gfx::text((char*)"MagFirmware v1.1", 0, status_bar_margin + title_margin, font, base_text_color);
+    gfx::text((char*)"MagFirmware v1.6", 0, status_bar_margin + title_margin, font, base_text_color);
     gfx::text((char*)"-by Dominik Kultys", 0, status_bar_margin + title_margin + line_margin, font, base_text_color);
     gfx::text((char*)"MCU: RP2040", 0, status_bar_margin + title_margin + 2 * line_margin, font, base_text_color);
     gfx::text((char*)"Sensors: FGM-3+", 0, status_bar_margin + title_margin + 3 * line_margin, font, base_text_color);

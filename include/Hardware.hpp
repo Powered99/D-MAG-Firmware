@@ -14,7 +14,7 @@
 #include "hardware/pwm.h"
 #include "hardware/adc.h"
 #include "pico/multicore.h"
-#include "pins.h"
+#include "pins.hpp"
 #include <functional>
 
 
