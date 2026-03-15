@@ -43,6 +43,8 @@ int main()
     disp::init_display();
     rtc::init_rtc();
     
+    // Temporary solution to set RTC time until the setting gets implemented, uncomment the following code, change the time data, and compile & flash. 
+    // Make sure to then comment the following code back and flash again to prevent the rtc being reset to this time on each boot!
     /*ds3231_datetime_t dt = {
         .hour = 13,
         .minutes = 35,
