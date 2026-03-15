@@ -79,9 +79,9 @@ You can still use previous revisions of the device but you'll have to change the
 ### Analog Sensors
 | Sensor | GPIO |
 |--------|------|
-| CH0    | 26   |
+| CH0    | 28   |
 | CH1    | 27   |
-| CH2    | 28   |
+| CH2    | 26   |
 | CH3    |  *Unavailable on official PICO*   |
 
 
