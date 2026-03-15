@@ -614,7 +614,7 @@ namespace settings{
                 for(int ch = 0 ; ch < fgm::SENSOR_CH_COUNT; ch++){
                     fgm::set_sample_count(ch, (uint)sample_count[ch]);
                     fgm::save_sample_count(ch);
-                    fgm::MEDIAN_SAMPLE_OFFSET[ch] = (uint)sample_count[ch] / 4;
+                    fgm::MEDIAN_SAMPLE_OFFSET[ch] = (uint)sample_count[ch] / 2;
                 }
             }
 

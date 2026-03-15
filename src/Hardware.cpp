@@ -49,9 +49,10 @@ bool adc_initialized = false; // ADC initialized flag
 
 CALIB_DATA SENSOR_CALIBRATIONS[SENSOR_CH_COUNT]; // Sensor calibration data (MIN, MAX values) // TODO: load/save from non-volatile memory
 
-uint SET_SAMPLE_COUNT[SENSOR_CH_COUNT] = {256}; // Configured sample count buffer
+uint SET_SAMPLE_COUNT[SENSOR_CH_COUNT]; // Configured sample count buffer
 uint SAMPLE_COUNT[SENSOR_CH_COUNT]; // Actual sample count used by the driver
-uint MEDIAN_SAMPLE_OFFSET[SENSOR_CH_COUNT] = {8}; // Offset of median samples (MEDIAN_SAMPLE_OFFSET <- center -> MEDIAN_SAMPLE_OFFSET), total median samples: 2x offset
+uint SET_MEDIAN_SAMPLE_OFFSET[SENSOR_CH_COUNT]; // Configuration buffer for median sample offset
+uint MEDIAN_SAMPLE_OFFSET[SENSOR_CH_COUNT]; // Offset of median samples (MEDIAN_SAMPLE_OFFSET <- center -> MEDIAN_SAMPLE_OFFSET), total median samples: 2x offset
 
 absolute_time_t last_pwm_read_timestamp[SENSOR_CH_COUNT];
 uint16_t sample_index[SENSOR_CH_COUNT] = {0};
@@ -272,13 +273,65 @@ void set_sensor_calibs(CALIB_DATA calib_data[SENSOR_CH_COUNT]){
 void set_sample_count(uint8_t ch, uint sample_count){
     SAMPLE_COUNT[ch] = sample_count;
 }
+// Sets all used sample counts to the given array of counts.
+void set_sample_counts(uint sample_counts[SENSOR_CH_COUNT]){
+    for(size_t i = 0; i < SENSOR_CH_COUNT; i++){
+        SAMPLE_COUNT[i] = sample_counts[i];
+    }
+}
 // Sets the used sample count to the corresponding value from the SET_SAMPLE_COUNT buffer.
 void load_sample_count(uint8_t ch){
     SAMPLE_COUNT[ch] = SET_SAMPLE_COUNT[ch];
 }
+// Sets all the used sample counts to the corresponding values from the SET_SAMPLE_COUNT buffer.
+void load_sample_counts(){
+    for(size_t i = 0; i < SENSOR_CH_COUNT; i++){
+        load_sample_count(i);
+    }
+}
 // Saves the current sample count to the SET_SAMPLE_COUNT buffer.
 void save_sample_count(uint8_t ch){
     SET_SAMPLE_COUNT[ch] = SAMPLE_COUNT[ch];
+}
+// Saves all the current sample counts to the SET_SAMPLE_COUNT buffer.
+void save_sample_counts(){
+    for(size_t i = 0; i < SENSOR_CH_COUNT; i++){
+        save_sample_count(i);
+    }
+}
+
+// Median offsets:
+
+
+// Sets the used median sample offset to the given value.
+void set_median_offset(uint8_t ch, uint offset){
+    MEDIAN_SAMPLE_OFFSET[ch] = offset;
+}
+// Sets the used median sample offsets to the given array of offsets.
+void set_median_offsets(uint sample_offsets[SENSOR_CH_COUNT]){
+    for(size_t i = 0; i < SENSOR_CH_COUNT; i++){
+        MEDIAN_SAMPLE_OFFSET[i] = sample_offsets[i];
+    }
+}
+// Sets the used median sample offset to the corresponding value from the SET_MEDIAN_SAMPLE_OFFSET buffer.
+void load_median_offset(uint8_t ch){
+    MEDIAN_SAMPLE_OFFSET[ch] = SET_MEDIAN_SAMPLE_OFFSET[ch];
+}
+// Sets all the used median sample offsets to the corresponding values from the SET_MEDIAN_SAMPLE_OFFSET buffer.
+void load_median_offsets(){
+    for(size_t i = 0; i < SENSOR_CH_COUNT; i++){
+        load_median_offset(i);
+    }
+}
+// Saves the current median sample offset to the SET_MEDIAN_SAMPLE_OFFSET buffer.
+void save_median_offset(uint8_t ch){
+    SET_MEDIAN_SAMPLE_OFFSET[ch] = MEDIAN_SAMPLE_OFFSET[ch];
+}
+// Saves all current median sample offsets to the SET_MEDIAN_SAMPLE_OFFSET buffer.
+void save_median_offsets(){
+    for(size_t i = 0; i < SENSOR_CH_COUNT; i++){
+        save_median_offset(i);
+    }
 }
 
 }

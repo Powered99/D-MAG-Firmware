@@ -30,22 +30,10 @@ void blink(size_t ms){
         status::set_led(led_state);
     }
 }
-
-// Main function
-int main()
-{
-    stdio_init_all();
-    
-    status::init_led();
-
-    fgm::set_sensor_modes((fgm::SENSOR_MODE[fgm::SENSOR_CH_COUNT]){fgm::SENSOR_MODE::FREQ, fgm::SENSOR_MODE::FREQ, fgm::SENSOR_MODE::DISABLED, fgm::SENSOR_MODE::DISABLED});
-    fgm::init_sensors();
-    disp::init_display();
-    rtc::init_rtc();
-    
-    // Temporary solution to set RTC time until the setting gets implemented, uncomment the following code, change the time data, and compile & flash. 
-    // Make sure to then comment the following code back and flash again to prevent the rtc being reset to this time on each boot!
-    /*ds3231_datetime_t dt = {
+// Temporary solution to set RTC time until the setting gets implemented, uncomment the function call, change the time data, and compile & flash. 
+// Make sure to then re-comment the call and flash again to prevent the rtc being reset to this time on each boot!
+void set_rtc(){
+    ds3231_datetime_t dt = {
         .hour = 13,
         .minutes = 35,
         .seconds = 20,
@@ -54,15 +42,33 @@ int main()
         .month = 3,
         .year = 2026,
     };
+    rtc::set_datetime(&dt);
+}
 
-    rtc::set_datetime(&dt);*/
+// Main function
+int main()
+{
+    // Default configurations (user-defined)
+    fgm::set_sensor_modes((fgm::SENSOR_MODE[fgm::SENSOR_CH_COUNT]){fgm::SENSOR_MODE::FREQ, fgm::SENSOR_MODE::FREQ, fgm::SENSOR_MODE::DISABLED, fgm::SENSOR_MODE::DISABLED});
+    fgm::set_sample_counts((uint[fgm::SENSOR_CH_COUNT]){128, 128, 128, 128});
+    fgm::set_median_offsets((uint[fgm::SENSOR_CH_COUNT]){32, 32, 32, 32});
+    fgm::save_sample_counts();
+    fgm::save_median_offsets();
+    logger::set_log_interval(6000);
 
-    
+    // Hardware & Driver initialization
+    stdio_init_all();
+    status::init_led();
+    fgm::init_sensors();
+    disp::init_display();
+    rtc::init_rtc();
     fs::init_sd();
-    
     ctrl::init_btn();
     ui::init();
+
+    //set_rtc();
     
+    // Main loop
     while (true) {
         ctrl::handle_events();
         fgm::read_sensors();
