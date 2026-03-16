@@ -216,7 +216,7 @@ void read_sensors(){
 }*/
 
 void calculate_calib(uint8_t ch){
-    CALIB_DATA ch_data = SENSOR_CALIBRATIONS[ch];
+    CALIB_DATA& ch_data = SENSOR_CALIBRATIONS[ch];
     ch_data.offset = (ch_data.MAX + ch_data.MIN) / 2.0;
     ch_data.slope = (B_MAX - B_MIN) / (ch_data.MAX - ch_data.MIN);
 }
