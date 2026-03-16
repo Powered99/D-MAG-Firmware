@@ -34,11 +34,11 @@ void blink(size_t ms){
 // Make sure to then re-comment the call and flash again to prevent the rtc being reset to this time on each boot!
 void set_rtc(){
     ds3231_datetime_t dt = {
-        .hour = 13,
-        .minutes = 35,
-        .seconds = 20,
-        .day = 15,
-        .dotw = 7,
+        .hour = 1,
+        .minutes = 25,
+        .seconds = 50,
+        .day = 16,
+        .dotw = 1,
         .month = 3,
         .year = 2026,
     };
