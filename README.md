@@ -88,7 +88,6 @@ You can still use previous revisions of the device but you'll have to change the
 ## Compile & Upload code
 Use VSCode with the Raspberry Pi Pico extension to compile and flash the code or copy the build/D-MAG-Firmware.uf2 file onto the Pico in BOOTSEL mode.
 
-
 # Credits:
 ## D-MAG-Firmware by Dominik Kultys
 
@@ -100,3 +99,9 @@ ds3231: https://github.com/antgon/pico-ds3231
 displaylib_16: https://github.com/gavinlyonsrepo/displaylib_16bit_PICO
 
 fatfs library: https://github.com/carlk3/no-OS-FatFS-SD-SPI-RPi-Pico
+
+# License:
+D-MAG-Firmware
+Copyright (c) 2026 Dominik Kultys
+Licensed under the Apache v2.0 License.
+See LICENSE file in the project root for full license information.
