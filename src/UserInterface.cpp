@@ -10,6 +10,7 @@
 #include "Datalogger.hpp"
 #include <limits>
 #include "math.h"
+#include "config.hpp"
 
 namespace ui{
 
@@ -1015,10 +1016,12 @@ namespace settings{
 
 
 void draw_info_page(){
-    gfx::text((char*)"MagFirmware v1.6", 0, status_bar_margin + title_margin, font, base_text_color);
+    char buf[20];
+    snprintf(buf, sizeof(buf), "D-MAG-Firmware: v%s", FIRMWARE_VERSION);
+    gfx::text(buf, 0, status_bar_margin + title_margin, font, base_text_color);
     gfx::text((char*)"-by Dominik Kultys", 0, status_bar_margin + title_margin + line_margin, font, base_text_color);
-    gfx::text((char*)"MCU: RP2040", 0, status_bar_margin + title_margin + 2 * line_margin, font, base_text_color);
-    gfx::text((char*)"Sensors: FGM-3+", 0, status_bar_margin + title_margin + 3 * line_margin, font, base_text_color);
+    gfx::text((char*)"Sensors: Freq/Volt", 0, status_bar_margin + title_margin + 2 * line_margin, font, base_text_color);
+    gfx::text((char*)"Data Format: IAGA2002", 0, status_bar_margin + title_margin + 3 * line_margin, font, base_text_color);
 }
 
 void draw_all_page(){

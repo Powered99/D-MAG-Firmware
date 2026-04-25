@@ -50,6 +50,7 @@ add_executable(D-MAG-Firmware
     src/UserInterface.cpp
     src/Datalogger.cpp
     src/Math.cpp
+    src/Formats.cpp
     lib/ads1x15/ads1x15.cpp
     ${DISPLAYLIB_16_SRC}
     )
@@ -57,7 +58,7 @@ add_subdirectory(lib/fatfs/no-OS-FatFS-SD-SPI-RPi-Pico/FatFs_SPI)
 add_subdirectory(lib/ds3231)
 
 pico_set_program_name(D-MAG-Firmware "D-MAG-Firmware")
-pico_set_program_version(D-MAG-Firmware "1.6")
+pico_set_program_version(D-MAG-Firmware "1.8")
 
 # Modify the below lines to enable/disable output over UART/USB
 pico_enable_stdio_uart(D-MAG-Firmware 0)

@@ -16,7 +16,7 @@ Feel free to use and modify it however! - If you do, please credit me in your pr
 - Read up to 4 Analog FGM3+ sensors, which output a voltage range
 - (Auto-detect sensors on non-disabled channels)
 - Take up to 2048 sensor samples and filter them using an averaged median array (up to 128 filtered samples)
-- Log data with accurate date/time on an SD card
+- Log data with accurate date/time on an SD card in IAGA2002 format
 - Display sensor readings / configurations, etc. in the UI
 - Configure multiple settings / factors (like sample count (median sample count setting is yet to be implemented!)) at runtime.
 
