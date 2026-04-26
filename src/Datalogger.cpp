@@ -15,8 +15,8 @@
 namespace logger{
     LOG_STATUS logging_status = LOG_STATUS::IDLE;
     uint32_t log_interval_ms = 1000;
-    bool LOG_CHANNELS[fgm::SENSOR_CH_COUNT];
-
+    bool LOG_CHANNELS[fgm::SENSOR_CH_COUNT] = {false};
+    uint8_t ACTIVE_SENSOR_COUNT = 0;
     uint8_t log_start_hour;
 
     void set_log_interval(uint32_t interval_ms){
@@ -60,28 +60,12 @@ namespace logger{
     // Write single IAGA2002 line
     fs::SD_STATUS iaga_line(ds3231_datetime_t dt) {
         char buf[72];
-        int doy = math::day_of_year(dt);
-
-        // "YYYY-MM-DD HH:MM:SS.000 DOY"
-        char prefix[32];
-        snprintf(prefix, sizeof(prefix), "%04d-%02d-%02d %02d:%02d:%02d.000 %03d",
-            dt.year, dt.month, dt.day, dt.hour, dt.minutes, dt.seconds, doy);
-        char columns[64] = "";
-        int pos = 0;
-        for (int ch = 0; ch < fgm::SENSOR_CH_COUNT; ch++) {
-            if (fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::DISABLED) continue;
-            float val;
-            if (fgm::SENSOR_STATES[ch] == fgm::SENSOR_STATE::INACTIVE)
-                val = 99999.00f;  // IAGA-2002 standard missing value
-            else
-                val = fgm::get_nT(ch);
-
-            pos += snprintf(columns + pos, sizeof(columns) - pos, "  %9.2f", val);
+        float sensor_values[fgm::SENSOR_CH_COUNT];
+        uint8_t active_ch = 0;
+        for(uint8_t ch = 0; ch < fgm::SENSOR_CH_COUNT; ch++){
+            if(LOG_CHANNELS[ch]) sensor_values[active_ch++] = fgm::get_nT(ch);
         }
-
-        // Construct string
-        snprintf(buf, sizeof(buf), "%-69s", (std::string(prefix) + columns).c_str());
-        buf[70] = '\n'; // Add new line character
+        IAGA2002::make_data_line(buf, sizeof(buf), dt, sensor_values, ACTIVE_SENSOR_COUNT);
         fs::SD_STATUS status = fs::write_file(buf);
         return status;
     }
@@ -106,25 +90,15 @@ namespace logger{
 
         fs::SD_STATUS sd_status = fs::open_file(fs::SD_MODE::SD_WRITE_APPEND, buf);
 
-        
-        /*if(sd_status != fs::SD_STATUS::SD_ERR){
-            // 1st row: eg. Time CH0 CH1 CH2...
-            snprintf(buf, sizeof(buf),(char*)"Time");
-            for(int ch = 0; ch < fgm::SENSOR_CH_COUNT; ch++){
-                if(fgm::SENSOR_MODES[ch] != fgm::SENSOR_MODE::DISABLED){
-                    LOG_CHANNELS[ch] = true;
-                    char chbuf[10];
-                    snprintf(chbuf, sizeof(chbuf), "\tCH%d",ch);
-                    strcat(buf, chbuf);
-                }else{
-                    LOG_CHANNELS[ch] = false;
-                }
-            }
-            sd_status = fs::write_file(buf);*/
-            switch(DATA_FORMAT){
-                case FORMATS::IAGA2002: iaga_header(); break;
-                //case FORMATS::DMAG2026: dmag_header(); break;
-            }
+        for(int ch = 0; ch < fgm::SENSOR_CH_COUNT; ch++){
+            LOG_CHANNELS[ch] = fgm::SENSOR_MODES[ch] != fgm::SENSOR_MODE::DISABLED;
+            ACTIVE_SENSOR_COUNT++;
+        }
+
+        switch(DATA_FORMAT){
+            case FORMATS::IAGA2002: iaga_header(); break;
+            //case FORMATS::DMAG2026: dmag_header(); break;
+        }
         //}
         logging_status = (sd_status == fs::SD_STATUS::SD_ERR) ? LOG_STATUS::ERROR : LOG_STATUS::LOGGING;
         return sd_status;
@@ -139,20 +113,14 @@ namespace logger{
     void log(){  
         ds3231_datetime_t dt;
         rtc::get_datetime(&dt);
-        fs::SD_STATUS status;// = iaga_line(dt);
-        /*
-        snprintf(buf, sizeof(buf), "\n%02d:%02d:%02d:%03d", dt.hour, dt.minutes, dt.seconds, rtc::get_micros()/1000);
-        for(int ch = 0; ch < fgm::SENSOR_CH_COUNT; ch++){
-            if(LOG_CHANNELS[ch]){
-                char ch_buf[16];
-                if(fgm::SENSOR_STATES[ch] == fgm::SENSOR_STATE::ACTIVE) snprintf(ch_buf, sizeof(ch_buf), "\t%f",fgm::get_nT(ch));
-                else if(fgm::SENSOR_STATES[ch] == fgm::SENSOR_STATE::INACTIVE) snprintf(ch_buf, sizeof(ch_buf), "\tINACTIVE");
-                else snprintf(ch_buf, sizeof(ch_buf), "\tDISABLED");
-                strcat(buf, ch_buf);
-            }
-        }
-        */
 
+        fs::SD_STATUS status;
+
+        switch(DATA_FORMAT){
+            case FORMATS::IAGA2002: status = iaga_line(dt); break; // iaga_line
+            //case FORMATS::DMAG2026: break; // dmag_line WIP
+        };
+        
         // start new file when new hour starts
         if(dt.hour != log_start_hour){
             stop_logging();
