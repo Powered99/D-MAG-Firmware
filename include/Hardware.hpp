@@ -147,6 +147,7 @@ namespace rtc{
     void get_datetime(ds3231_datetime_t *datetime);
     uint64_t get_micros();
     void loop();
+    float get_temperature();
 }
 
 namespace status{

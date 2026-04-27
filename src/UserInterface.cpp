@@ -11,6 +11,7 @@
 #include <limits>
 #include "math.h"
 #include "config.hpp"
+#include "Formats.hpp"
 
 namespace ui{
 
@@ -1021,7 +1022,7 @@ void draw_info_page(){
     gfx::text(buf, 0, status_bar_margin + title_margin, font, base_text_color);
     gfx::text((char*)"-by Dominik Kultys", 0, status_bar_margin + title_margin + line_margin, font, base_text_color);
     gfx::text((char*)"Sensors: Freq/Volt", 0, status_bar_margin + title_margin + 2 * line_margin, font, base_text_color);
-    gfx::text((char*)"Data Format: IAGA2002", 0, status_bar_margin + title_margin + 3 * line_margin, font, base_text_color);
+    gfx::text((char*)"Data Format: IAGA-2002", 0, status_bar_margin + title_margin + 3 * line_margin, font, base_text_color);
 }
 
 void draw_all_page(){
@@ -1152,26 +1153,27 @@ namespace logging{
     void draw(){
         static size_t startstop_len;
 
-        char buf[20];
+        char buf[32];
         int y = status_bar_margin + title_margin;
-        char* status_text = (char*)((logger::logging_status == logger::LOG_STATUS::LOGGING) ? "Logging channels:" : (logger::logging_status == logger::LOG_STATUS::IDLE && fs::sd_available) ? "Logger idle" : "SD error; restart required");
-        
+        char* status_text = (char*)((logger::logging_status == logger::LOG_STATUS::LOGGING) ? "Logging elements:" : (logger::logging_status == logger::LOG_STATUS::IDLE && fs::sd_available) ? "Logger idle" : "SD error; restart required");
         gfx::text(status_text, 0, y, font, subtitle_text_color);
 
         y += subtitle_margin;
         if(logger::logging_status == logger::LOG_STATUS::LOGGING){
             
             snprintf(buf, sizeof(buf), "");
-            for(int ch = 0; ch < fgm::SENSOR_CH_COUNT; ch++){
-                if(!logger::LOG_CHANNELS[ch]) continue;
+            for(uint8_t i = 0; i < LOG_ELEMENT_COUNT; i++){
                 char ch_buf[7];
-                strcat(buf,(ch == 0) ? "" : ", ");
-                snprintf(ch_buf, sizeof(ch_buf), "CH%d", ch);
+                strcat(buf,(i == 0) ? "" : ", ");
+                snprintf(ch_buf, sizeof(ch_buf), "%s", LOG_ELEMENTS[i].label);
                 strcat(buf, ch_buf);
             }
             gfx::text(buf, 0, y, font, positive_text_color);
             y += line_margin;
-            snprintf(buf, sizeof(buf), "Interval: %dms.",logger::log_interval_ms);
+            snprintf(buf, sizeof(buf), "Interval: %dms",logger::log_interval_ms);
+            gfx::text(buf, 0, y, font, subtitle_text_color);
+            y += line_margin;
+            snprintf(buf, sizeof(buf), "Format: %s", DATA_FORMAT == FORMATS::IAGA2002 ? "IAGA-2002" : DATA_FORMAT == FORMATS::DMAG2026 ? "DMAG-2026" : "Unknown");
             gfx::text(buf, 0, y, font, subtitle_text_color);
             y += line_margin;
         }

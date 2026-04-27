@@ -15,8 +15,6 @@
 namespace logger{
     LOG_STATUS logging_status = LOG_STATUS::IDLE;
     uint32_t log_interval_ms = 1000;
-    bool LOG_CHANNELS[fgm::SENSOR_CH_COUNT] = {false};
-    uint8_t ACTIVE_SENSOR_COUNT = 0;
     uint8_t log_start_hour;
 
     void set_log_interval(uint32_t interval_ms){
@@ -60,13 +58,19 @@ namespace logger{
     // Write single IAGA2002 line
     fs::SD_STATUS iaga_line(ds3231_datetime_t dt) {
         char buf[72];
-        float sensor_values[fgm::SENSOR_CH_COUNT];
-        uint8_t active_ch = 0;
-        for(uint8_t ch = 0; ch < fgm::SENSOR_CH_COUNT; ch++){
-            if(LOG_CHANNELS[ch]) sensor_values[active_ch++] = fgm::get_nT(ch);
+        uint8_t logged_element_count = (LOG_ELEMENT_COUNT < IAGA2002::max_sensor_channels) ? LOG_ELEMENT_COUNT : IAGA2002::max_sensor_channels;
+        float sensor_values[logged_element_count];
+        for(uint8_t ch = 0; ch < logged_element_count; ch++){
+            float value = 99999.0f;
+            if(LOG_ELEMENTS[ch].element == ELEMENTS::MAG && fgm::SENSOR_STATES[LOG_ELEMENTS[ch].channel] == fgm::SENSOR_STATE::ACTIVE){
+                value = fgm::get_nT(LOG_ELEMENTS[ch].channel);
+            }else if(LOG_ELEMENTS[ch].element == ELEMENTS::TEMP){
+                value = rtc::get_temperature();
+            }
+            sensor_values[ch] = value;
         }
-        IAGA2002::make_data_line(buf, sizeof(buf), dt, sensor_values, ACTIVE_SENSOR_COUNT);
-        fs::SD_STATUS status = fs::write_file(buf);
+        IAGA2002::make_data_line(buf, sizeof(buf), dt, sensor_values, logged_element_count);
+        fs::SD_STATUS status = fs::write_file(buf);    
         return status;
     }
 
@@ -89,11 +93,6 @@ namespace logger{
         snprintf(buf, sizeof(buf), "%04d%02d%02d%02d%02d%02d.txt", dt.year, dt.month, dt.day, dt.hour, dt.minutes, dt.seconds);
 
         fs::SD_STATUS sd_status = fs::open_file(fs::SD_MODE::SD_WRITE_APPEND, buf);
-
-        for(int ch = 0; ch < fgm::SENSOR_CH_COUNT; ch++){
-            LOG_CHANNELS[ch] = fgm::SENSOR_MODES[ch] != fgm::SENSOR_MODE::DISABLED;
-            ACTIVE_SENSOR_COUNT++;
-        }
 
         switch(DATA_FORMAT){
             case FORMATS::IAGA2002: iaga_header(); break;

@@ -25,12 +25,27 @@
 #define SENSOR_ORIENTATION "X-Component"
 #define DATA_TYPE "reported"
 
+enum class ELEMENTS{
+    MAG,
+    TEMP
+};
 
-const char SENSOR_LABELS[fgm::SENSOR_CH_COUNT][3] = {
-    "X1",
-    "X2",
-    "X3",
-    "X4"
+struct element_t{
+    ELEMENTS element;
+    uint8_t channel;
+    char label[9];
+};
+
+// IAGA2002 allows for a maximum of 4 elements.
+// For more value columns use DMAG2026
+
+const uint8_t LOG_ELEMENT_COUNT = 4;
+
+const element_t LOG_ELEMENTS[LOG_ELEMENT_COUNT] = {
+    {ELEMENTS::MAG, 0, "X1"},
+    {ELEMENTS::MAG, 1, "X2"},
+    {ELEMENTS::MAG, 2, "X3"},
+    {ELEMENTS::TEMP, 0, "TEMP"}
 };
 
 enum class FORMATS{
@@ -58,7 +73,8 @@ namespace IAGA2002{
     header_line_t make_header_comment(const char* comment, std::function<std::string()> callback);
 
     std::string get_reported();
-    std::string get_sensor_count();
+    std::string get_str_magnetometer_count();
+
     //std::string make_sensor_info();
 
     void make_header_line(char* buf, size_t buf_size, header_line_t line);
@@ -83,7 +99,7 @@ namespace IAGA2002{
     static header_line_t COMMENTS[COMMENT_ENTRY_COUNT] = {
         make_header_comment("Units: X (north+)[nT]"),
         make_header_comment("Accuracy: 1nT"),
-        make_header_comment("Sensor count: %s", IAGA2002::get_sensor_count),
+        make_header_comment("Magnetometer count: %s", IAGA2002::get_str_magnetometer_count),
         make_header_comment("D-MAG-Firmware v1.8"),//FIRMWARE_VERSION),
         make_header_comment("https://www.github.com/Powered99/D-MAG-Firmware"),
         //make_header_comment("%s", IAGA2002::make_sensor_info),

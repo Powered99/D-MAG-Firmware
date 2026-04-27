@@ -521,4 +521,10 @@ namespace rtc{
     void get_datetime(ds3231_datetime_t *datetime){
         ds3231_get_datetime(datetime, &ds3231);
     }
+
+    float get_temperature(){
+        float temperature;
+        ds3231_get_temperature(&temperature, &ds3231);
+        return temperature;
+    }
 }

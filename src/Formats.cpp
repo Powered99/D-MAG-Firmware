@@ -48,29 +48,24 @@ namespace IAGA2002{
 
     std::string get_reported(){
         std::string reported = "";
-        uint8_t active_sensors = 0;
-        for (int ch = 0; ch < fgm::SENSOR_CH_COUNT; ch++) {
-            if (fgm::SENSOR_MODES[ch] != fgm::SENSOR_MODE::DISABLED) {
-                reported += SENSOR_LABELS[ch];
-                active_sensors++;
-                if(active_sensors >= max_sensor_channels) break; // Limit sensor channels to fit inside IAGA line width.
-            }
+        uint8_t upper_bound = (LOG_ELEMENT_COUNT < max_sensor_channels) ? LOG_ELEMENT_COUNT : max_sensor_channels;
+        for (uint8_t i = 0; i < upper_bound; i++) {
+            reported += LOG_ELEMENTS[i].label;
+            reported += " ";
         }
         return reported;
     }
-    std::string get_sensor_count(){
-        int count = 0;
-        for (int ch = 0; ch < fgm::SENSOR_CH_COUNT; ch++) {
-            if (fgm::SENSOR_MODES[ch] != fgm::SENSOR_MODE::DISABLED) count++;
-        }
-        return std::to_string(count);
-    }
-    uint8_t get_active_sensor_count(){
+
+    uint8_t get_active_magnetometer_count(){
         uint8_t count = 0;
         for (int ch = 0; ch < fgm::SENSOR_CH_COUNT; ch++) {
             if (fgm::SENSOR_MODES[ch] != fgm::SENSOR_MODE::DISABLED) count++;
         }
         return count;
+    }
+
+    std::string get_str_magnetometer_count(){
+        return std::to_string(get_active_magnetometer_count());
     }
 
     // buf must be at least 72 bytes
@@ -86,36 +81,32 @@ namespace IAGA2002{
         snprintf(buf, buf_size, " %-*s|\n", header_content_width, content_buf); // Construct full string (content, pipe, newline)
     }
 
-    // buf must be at least (header_content_width + 3) bytes
+    // buf must be at least 72 bytes
     void make_column_line(char* buf, size_t buf_size) {
-        if (buf_size < header_content_width + 3u) return;
+        if (buf_size < 72) return;
 
-        char content_buf[header_content_width] = {}; // zero-init to avoid gaps being uninitialized
+        char content_buf[header_content_width + 2] = {}; // + 2 for pipe and null terminator
 
         int pos = snprintf(content_buf, sizeof(content_buf), "%-32s", "DATE       TIME         DOY");
         if (pos < 0 || pos >= (int)sizeof(content_buf)) return;
 
-        uint8_t active_sensors = 0;
-        for (int ch = 0; ch < fgm::SENSOR_CH_COUNT; ch++) {
-            if (fgm::SENSOR_MODES[ch] != fgm::SENSOR_MODE::DISABLED) {
-                if (pos >= (int)sizeof(content_buf)) break;
+        uint8_t upper_bound = (LOG_ELEMENT_COUNT < max_sensor_channels) ? LOG_ELEMENT_COUNT : max_sensor_channels;
 
-                char label[32];
-                snprintf(label, sizeof(label), "%s%s", IAGA_CODE, SENSOR_LABELS[ch]);
+        for (uint8_t i = 0; i < upper_bound; i++) {
+            if (pos >= (int)sizeof(content_buf)) break;
 
-                int written = snprintf(content_buf + pos, sizeof(content_buf) - pos, "%-10s", label);
-                if (written < 0 || written >= (int)(sizeof(content_buf) - pos)) break;
-                pos += written;
+            char label[32];
+            snprintf(label, sizeof(label), "%s%s", IAGA_CODE, LOG_ELEMENTS[i].label);
 
-                active_sensors++;
-                if (active_sensors >= max_sensor_channels) break;
-            }
+            int written = snprintf(content_buf + pos, sizeof(content_buf) - pos, "%-10s", label);
+            if (written < 0 || written >= (int)(sizeof(content_buf) - pos)) break;
+            pos += written;
         }
 
-        snprintf(buf, buf_size, "%-*s|\n", header_content_width + 1, content_buf);
+        snprintf(buf, buf_size, "%-*s|\n", header_content_width + 1, content_buf); // header_content_width to account for the extra space, which in this case is left out.
     }
 
-    void make_data_line(char* buf, size_t buf_size, ds3231_datetime_t dt, float* sensor_values, uint8_t sensor_count) {
+    void make_data_line(char* buf, size_t buf_size, ds3231_datetime_t dt, float* element_values, uint8_t element_count) {
         int doy = math::day_of_year(dt);
 
         char prefix[32];
@@ -123,14 +114,10 @@ namespace IAGA2002{
 
         char columns[128] = {};
         int pos = 0;
-        for (int ch = 0; ch < fgm::SENSOR_CH_COUNT; ch++) {
-            if (fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::DISABLED) continue;
-            float val;
-            if (fgm::SENSOR_STATES[ch] == fgm::SENSOR_STATE::INACTIVE)
-                val = 99999.00f;
-            else
-                val = fgm::get_nT(ch);
+        float val;
 
+        for (uint8_t i = 0; i < element_count; i++) {
+            val = element_values[i];
             pos += snprintf(columns + pos, sizeof(columns) - pos, "%10.2f", val);
         }
 
@@ -141,10 +128,10 @@ namespace IAGA2002{
     /*std::string make_sensor_info(){
         char buf[get_active_sensor_count() * (format_line_width + 1)];
         int offset = 0;
-        for (int ch = 0; ch < fgm::SENSOR_CH_COUNT; ch++) {
-            if (fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::DISABLED) continue;
-            std::string state_str = (fgm::SENSOR_STATES[ch] == fgm::SENSOR_STATE::INACTIVE) ? "inactive" : "active";
-            offset += snprintf(buf + offset, sizeof(buf) - offset, " # Sensor X%s: Fluxgate, parallel X-axis orientation, %s Samples%s", std::to_string(ch + 1).c_str(), std::to_string(fgm::SAMPLE_COUNT[ch]).c_str(), ch == fgm::SENSOR_CH_COUNT - 1 ? "" : "\n");
+        for (uint8_t i = 0; i < LOG_ELEMENT_COUNT; i++) {
+            if (fgm::SENSOR_MODES[LOG_ELEMENTS[i].channel] == fgm::SENSOR_MODE::DISABLED) continue;
+            std::string state_str = (fgm::SENSOR_STATES[LOG_ELEMENTS[i].channel] == fgm::SENSOR_STATE::INACTIVE) ? "inactive" : "active";
+            offset += snprintf(buf + offset, sizeof(buf) - offset, " # Sensor X%s: Fluxgate, parallel X-axis orientation, %s Samples%s", std::to_string(LOG_ELEMENTS[i].channel + 1).c_str(), std::to_string(fgm::SAMPLE_COUNT[LOG_ELEMENTS[i].channel]).c_str(), LOG_ELEMENTS[i].channel == fgm::SENSOR_CH_COUNT - 1 ? "" : "\n");
         }
         return std::string(buf);
     }*/
