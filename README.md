@@ -3,29 +3,28 @@
 # D-MAG-Firmware
 A vastly configurable Flux-Gate-Magnetometer firmware for the Raspberry Pi Pico (RP2040) used to read from up to 4 FGM3+ fluxgate magnetometers (via PWM or ADC).
 
-The D-MAG-Firmware is still **in early development** and has **been published mostly just to show its current progress!**
-Therefore, using it can still be buggy and incomplete.
+The D-MAG-Firmware is still **in early development**. Therefore, using it can still be buggy and incomplete.
 
-Its currently being developed for private use, which could mean,
+Its currently being developed mainly for private use, which could mean,
 that some of these upcoming features or bugs could take a long time to or never become finished or fixed.
 
-Feel free to use and modify it however! - If you do, please credit me in your project if you're publishing it / it's documentation.
+**Feel free to use and modify it however!** - If you do, please **credit me** in your project if you're publishing it / it's documentation.
 
 # Features:
 - Read up to 4 PWM FGM3+ sensors, which output a frequency range
 - Read up to 4 Analog FGM3+ sensors, which output a voltage range
+- Keep track of time and read temperature with RTC
 - (Auto-detect sensors on non-disabled channels)
 - Take up to 2048 sensor samples and filter them using an averaged median array (up to 128 filtered samples)
-- Log data with accurate date/time on an SD card in IAGA2002 format
+- Log data with accurate date/time on an SD card with an flexible logging system in various formats (IAGA-2002 / DMAG-2026)
 - Display sensor readings / configurations, etc. in the UI
-- Configure multiple settings / factors (like sample count (median sample count setting is yet to be implemented!)) at runtime.
+- Configure multiple settings / factors (like sample count) at runtime.
 
 
 # Upcoming features I'm working on:
-
 - Running measurements on CORE #1 (to avoid overhead from other system components, thus improving precision and speed)
 - Saving settings / sensor calibrations in NVM (Non-volatile-memory, probably flash or SD)
-- Some missing or unfinished settings in the settings page (like runtime RTC configuration or median sample count)
+- Some missing or unfinished settings in the settings page (like at-runtime RTC / median sample count / log elements and formatting configuration)
 - Compatibility with EAS-based DIY sensors over I2C
 - Other features, like display power-saving, further optimizations, etc.
 
