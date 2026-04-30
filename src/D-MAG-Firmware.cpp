@@ -46,17 +46,22 @@ int main()
     stdio_init_all();
     status::init_led(); // nvm uses status, initialize beforehand
     if (!nvm::load()) nvm::load_defaults(); // Load from NVM or defaults when failed
+    if(logger::logging_status == logger::LOG_STATUS::ERROR){
+        logger::logging_status = logger::LOG_STATUS::IDLE; // Reset logging status if it was in error state, to prevent lockout from logging
+    }
     fgm::init_sensors();
     disp::init_display();
     rtc::init_rtc();
     fs::init_sd();
     ctrl::init_btn();
     ui::init();
+    
     bool die = logger::logging_status == logger::LOG_STATUS::LOGGING;
     
     if(die){
         dont();
     }
+
 
     //set_rtc();
     
