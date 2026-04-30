@@ -25,6 +25,7 @@ that some of these upcoming features or bugs could take a long time to or never 
 - Running measurements on CORE #1 (to avoid overhead from other system components, thus improving precision and speed)
 - Some missing or unfinished settings in the settings page (like at-runtime RTC / median sample count / log elements and formatting configuration)
 - Compatibility with EAS-based DIY sensors over I2C
+- SD-card hot-plugging
 - Other features, like display power-saving, further optimizations, etc.
 
 # Usage:
