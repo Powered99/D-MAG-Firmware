@@ -16,6 +16,7 @@
 #include "pico/multicore.h"
 #include "pins.hpp"
 #include <functional>
+#include "Config.hpp"
 
 
 namespace disp{
@@ -27,25 +28,10 @@ namespace disp{
 }
 
 namespace fgm{
-    enum class SENSOR_MODE: int8_t {
-        DISABLED = -1,
-        FREQ = 0,
-        HARMONIC = 1,
-        ANALOG = 2
-    };
     enum class SENSOR_STATE : int8_t {
         DISABLED = -1,
         INACTIVE = 0,
         ACTIVE = 1
-    };
-    
-    constexpr float B_MIN = -50e-6f; // Lowest value in earth's magnetic field (-50uT)
-    constexpr float B_MAX = 50e-6f; // Highest value in earth's magnetic field (50uT)
-    struct CALIB_DATA{
-        float MIN = 8.5e-6f;
-        float MAX = 25e-6f;
-        double offset = 0.0f;
-        double slope = 0.0f;
     };
     struct freq_sample{
         uint64_t delta_t = 0;
@@ -54,19 +40,13 @@ namespace fgm{
 
     constexpr float ANALOG_CONVERSION_FACTOR = 3.274f / (1 << 12); // system voltage / 12bit max value
 
-    constexpr uint8_t SENSOR_CH_COUNT = 4; // Edit to change sensor count
-
     constexpr uint MAX_SAMPLE_COUNT = 2048; // Max sample count for frequency measurement
 
     extern uint SET_SAMPLE_COUNT[SENSOR_CH_COUNT]; // Configuration buffer for sample count
-    extern uint SAMPLE_COUNT[SENSOR_CH_COUNT]; // Actual used sample count (set with set_sample_count)
     extern uint SET_MEDIAN_SAMPLE_OFFSET[SENSOR_CH_COUNT]; // Configuration buffer for median sample offset
-    extern uint MEDIAN_SAMPLE_OFFSET[SENSOR_CH_COUNT]; // Offset of median samples (MEDIAN_SAMPLE_OFFSET <- center -> MEDIAN_SAMPLE_OFFSET), total median samples: 2x offset
-
-    extern SENSOR_MODE SENSOR_MODES[SENSOR_CH_COUNT];
+    
     extern SENSOR_STATE SENSOR_STATES[SENSOR_CH_COUNT];
-    extern CALIB_DATA SENSOR_CALIBRATIONS[SENSOR_CH_COUNT];
-
+    
     extern uint16_t sample_index[SENSOR_CH_COUNT];
 
     extern double periods[SENSOR_CH_COUNT]; // delta between sensor output ticks
@@ -100,6 +80,10 @@ namespace fgm{
 
     void calculate_nT(uint8_t ch);
     float get_nT(uint8_t ch);
+}
+
+namespace non_volatile_memory{
+
 }
 
 namespace ctrl{

@@ -8,15 +8,15 @@
 
 #include "Datalogger.hpp"
 #include "Hardware.hpp"
-#include "config.hpp"
+#include "Config.hpp"
 #include "Formats.hpp"
 #include "Math.hpp"
 
 namespace logger{
     LOG_STATUS logging_status = LOG_STATUS::IDLE;
-    uint32_t log_interval_ms = 1000;
+    
     uint8_t log_start_hour;
-
+    
     void set_log_interval(uint32_t interval_ms){
         log_interval_ms = interval_ms;
     }

@@ -1173,7 +1173,7 @@ namespace logging{
             snprintf(buf, sizeof(buf), "Interval: %dms",logger::log_interval_ms);
             gfx::text(buf, 0, y, font, subtitle_text_color);
             y += line_margin;
-            snprintf(buf, sizeof(buf), "Format: %s", DATA_FORMAT == FORMATS::IAGA2002 ? "IAGA-2002" : DATA_FORMAT == FORMATS::DMAG2026 ? "DMAG-2026" : "Unknown");
+            snprintf(buf, sizeof(buf), "Format: %s", logger::DATA_FORMAT == logger::FORMATS::IAGA2002 ? "IAGA-2002" : logger::DATA_FORMAT == logger::FORMATS::DMAG2026 ? "DMAG-2026" : "Unknown");
             gfx::text(buf, 0, y, font, subtitle_text_color);
             y += line_margin;
         }

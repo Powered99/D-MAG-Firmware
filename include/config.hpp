@@ -8,7 +8,42 @@
 
 #pragma once
 
-#include "Formats.hpp"
+#include <stdlib.h>
+#include "pico/stdlib.h"
 
 #define FIRMWARE_VERSION "1.8"
-#define DATA_FORMAT FORMATS::IAGA2002
+
+namespace fgm{
+    enum class SENSOR_MODE: int8_t {
+        DISABLED = -1,
+        FREQ = 0,
+        HARMONIC = 1,
+        ANALOG = 2
+    };
+        
+    constexpr float B_MIN = -50e-6f; // Lowest value in earth's magnetic field (-50uT)
+    constexpr float B_MAX = 50e-6f; // Highest value in earth's magnetic field (50uT)
+    struct CALIB_DATA{
+        float MIN = 8.5e-6f;
+        float MAX = 25e-6f;
+        double offset = 0.0f;
+        double slope = 0.0f;
+    };
+
+    constexpr uint8_t SENSOR_CH_COUNT = 4; // Edit to change sensor count
+
+    extern SENSOR_MODE SENSOR_MODES[SENSOR_CH_COUNT];
+    extern uint SAMPLE_COUNT[SENSOR_CH_COUNT]; // Actual used sample count (set with set_sample_count)
+    extern uint MEDIAN_SAMPLE_OFFSET[SENSOR_CH_COUNT]; // Offset of median samples (MEDIAN_SAMPLE_OFFSET <- center -> MEDIAN_SAMPLE_OFFSET), total median samples: 2x offset
+    extern CALIB_DATA SENSOR_CALIBRATIONS[SENSOR_CH_COUNT];
+    
+}
+namespace logger{
+    extern uint32_t log_interval_ms;
+    enum class FORMATS{
+        IAGA2002,
+        DMAG2026
+    };
+    extern FORMATS DATA_FORMAT;
+}
+

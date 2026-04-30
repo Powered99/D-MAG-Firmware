@@ -11,7 +11,7 @@
 #include "Hardware.hpp"
 #include <cstring>
 #include <functional>
-#include "config.hpp"
+#include "Config.hpp"
 
 // IAGA2002 header metadata
 #define SOURCE_OF_DATA "HvF Braunschweig"
@@ -48,10 +48,6 @@ const element_t LOG_ELEMENTS[LOG_ELEMENT_COUNT] = {
     {ELEMENTS::TEMP, 0, "TEMP"}
 };
 
-enum class FORMATS{
-    IAGA2002,
-    DMAG2026
-};
 
 namespace IAGA2002{
     const uint8_t header_entry_name_length = 22;

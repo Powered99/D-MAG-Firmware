@@ -51,6 +51,7 @@ add_executable(D-MAG-Firmware
     src/Datalogger.cpp
     src/Math.cpp
     src/Formats.cpp
+    src/Config.cpp
     lib/ads1x15/ads1x15.cpp
     ${DISPLAYLIB_16_SRC}
     )

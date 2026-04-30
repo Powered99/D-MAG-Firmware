@@ -9,6 +9,7 @@
 #include "Hardware.hpp"
 #include "Graphics.hpp"
 #include "Math.hpp"
+#include "Config.hpp"
 
 #include <functional>
 #include <vector>
@@ -37,7 +38,6 @@ void init_display(){
 namespace fgm{
 
 // Sensor modes & states
-SENSOR_MODE SENSOR_MODES[SENSOR_CH_COUNT] = {SENSOR_MODE::DISABLED};
 SENSOR_STATE SENSOR_STATES[SENSOR_CH_COUNT];
 
 // Initialized flags for sensor channels
@@ -47,13 +47,8 @@ bool I2C_INITIALIZED[SENSOR_CH_COUNT]; // 3rd-harmonic based sensor driver (via 
 
 bool adc_initialized = false; // ADC initialized flag
 
-CALIB_DATA SENSOR_CALIBRATIONS[SENSOR_CH_COUNT]; // Sensor calibration data (MIN, MAX values) // TODO: load/save from non-volatile memory
-
 uint SET_SAMPLE_COUNT[SENSOR_CH_COUNT]; // Configured sample count buffer
-uint SAMPLE_COUNT[SENSOR_CH_COUNT]; // Actual sample count used by the driver
 uint SET_MEDIAN_SAMPLE_OFFSET[SENSOR_CH_COUNT]; // Configuration buffer for median sample offset
-uint MEDIAN_SAMPLE_OFFSET[SENSOR_CH_COUNT]; // Offset of median samples (MEDIAN_SAMPLE_OFFSET <- center -> MEDIAN_SAMPLE_OFFSET), total median samples: 2x offset
-
 absolute_time_t last_pwm_read_timestamp[SENSOR_CH_COUNT];
 uint16_t sample_index[SENSOR_CH_COUNT] = {0};
 
