@@ -19,6 +19,7 @@
 #include "pins.hpp"
 #include <functional>
 #include "Config.hpp"
+#include "Datalogger.hpp"
 
 
 namespace disp{
@@ -147,7 +148,7 @@ namespace nvm { // Non-volatile-memory (flash) storage for settings / configurat
 
     constexpr uint32_t FLASH_OFFSET = PICO_FLASH_SIZE_BYTES - FLASH_SECTOR_SIZE;
     constexpr uint32_t MAGIC        = 0xD4A60001;
-    constexpr uint16_t VERSION      = 1;
+    constexpr uint16_t VERSION      = 2;
     constexpr uint8_t  MAX_CH       = 6;
 
     struct CalibEntry {
@@ -168,6 +169,7 @@ namespace nvm { // Non-volatile-memory (flash) storage for settings / configurat
         uint8_t    _pad2[3];
         uint32_t   log_interval_ms;
         uint32_t   checksum;
+        uint8_t    logging_status;
     };
 
     static_assert(sizeof(Block) <= FLASH_PAGE_SIZE, "nvm::Block exceeds one flash page");

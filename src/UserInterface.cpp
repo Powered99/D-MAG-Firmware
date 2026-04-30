@@ -225,6 +225,7 @@ namespace settings{
     bool setting_open = false;
     uint8_t setting_count = SETTING_COUNT;
     uint8_t selected_setting = 0;
+    bool config_changes = false;
 
     // Setting options & executeables
 
@@ -235,9 +236,9 @@ namespace settings{
         {.text="FGM - Calibrate", .exec=fgm_conf::calib::draw, .init=fgm_conf::calib::init},
         {.text="FGM - Sampling", .exec=fgm_conf::sampling::draw, .init=fgm_conf::sampling::init},
         {.text="LOG - Set interval", .exec=log::interval::draw, .init=log::interval::init},
-        {.text="NVM - Save to flash", .exec=nvm::save},
         {.text="NVM - Factory reset", .exec = [](){ nvm::load_defaults(); nvm::save(); }},
-        {.text="Exit settings", .exec=exit_settings}
+        {.text="NVM - Load stored", .exec = nvm::load },
+        {.text="Save & Exit", .exec=exit_settings}
     };
 
     // Setting option pages
@@ -313,6 +314,7 @@ namespace settings{
                 exit_setting();
             }
             void submit(){
+                config_changes = true;
                 apply_ch();
                 settings::fgm_conf::modes::exit();
             }
@@ -427,6 +429,7 @@ namespace settings{
                 draw();
             }
             void calib_submit(){
+                config_changes = true;
                 apply_ch();
                 calib_exit();
             }
@@ -682,6 +685,7 @@ namespace settings{
                 exit_setting();
             }
             void submit(){
+                config_changes = true;
                 submit_sample_count();
                 exit();
             }
@@ -872,6 +876,7 @@ namespace settings{
                 exit_setting();
             }
             void submit(){
+                config_changes = true;
                 apply_interval();
                 exit();
             }
@@ -966,6 +971,10 @@ namespace settings{
     }
 
     void exit_settings(){
+        if(config_changes){
+            nvm::save();
+            config_changes = false;
+        }
         selected_setting = 0;
         setting_open = false;
         settings::controls::remove_controls();
@@ -1026,7 +1035,7 @@ void draw_info_page(){
     size_t buf_len = strlen(buf);
     gfx::text(buf, 0, status_bar_margin + title_margin, font, base_text_color);
     snprintf(buf, sizeof(buf), "v%s", FIRMWARE_VERSION);
-    static int32_t prev_scroll_offset1 = 0; static absolute_time_t prev_update1 = nil_time; gfx::scrolling_text(buf, (buf_len + 1) * font_width, status_bar_margin + title_margin, font_width * 5, font, base_text_color, font_width, font_height, prev_scroll_offset1, prev_update1, 100, 1, 2 * font_width);
+    static int32_t prev_scroll_offset1 = 0; static absolute_time_t prev_update1 = nil_time; gfx::scrolling_text(buf, (buf_len + 1) * font_width, status_bar_margin + title_margin, font_width * 4, font, base_text_color, font_width, font_height, prev_scroll_offset1, prev_update1, 100, 1, 2 * font_width);
     
     gfx::text((char*)"-by Dominik Kultys", 0, status_bar_margin + title_margin + line_margin, font, base_text_color);
     gfx::text((char*)"Sensors: Freq/Volt", 0, status_bar_margin + title_margin + 2 * line_margin, font, base_text_color);
@@ -1160,8 +1169,8 @@ namespace logging{
         toggle_held = false;
     }
     void toggle_log(){
-        if(logger::logging_status == logger::LOG_STATUS::LOGGING) logger::stop_logging();
-        else if(logger::logging_status == logger::LOG_STATUS::IDLE) logger::start_logging();
+        if(logger::logging_status == logger::LOG_STATUS::LOGGING){ logger::stop_logging(); nvm::save(); }
+        else if(logger::logging_status == logger::LOG_STATUS::IDLE){ logger::start_logging(); nvm::save(); }
         gfx::clear();
     }
     void draw(){

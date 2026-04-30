@@ -13,9 +13,9 @@
 
 namespace logger{
     enum class LOG_STATUS{
-        LOGGING,
-        IDLE,
-        ERROR
+        LOGGING = 0,
+        IDLE = 1,
+        ERROR = 2
     };
     extern LOG_STATUS logging_status;
 

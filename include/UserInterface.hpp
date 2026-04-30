@@ -46,6 +46,7 @@ namespace ui{
     
     void init();
     void draw_page();
+    void set_page(uint8_t page_to_set);
 
     namespace settings{
         struct option{
