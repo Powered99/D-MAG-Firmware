@@ -19,52 +19,44 @@
 #include "Datalogger.hpp"
 #include "Math.hpp"
 
-
-void blink(size_t ms){
-    static absolute_time_t last_led_toggle = get_absolute_time();
-    static bool led_state = false;
-
-    if(get_absolute_time() - last_led_toggle >= ms * 1000){
-        last_led_toggle = get_absolute_time();
-        led_state = !led_state;
-        status::set_led(led_state);
-    }
-}
 // Temporary solution to set RTC time until the setting gets implemented, uncomment the function call, change the time data, and compile & flash. 
 // Make sure to then re-comment the call and flash again to prevent the rtc being reset to this time on each boot!
 void set_rtc(){
     ds3231_datetime_t dt = {
-        .hour = 13,
-        .minutes = 35,
-        .seconds = 20,
-        .day = 15,
-        .dotw = 7,
+        .hour = 1,
+        .minutes = 25,
+        .seconds = 50,
+        .day = 16,
+        .dotw = 1,
         .month = 3,
         .year = 2026,
     };
     rtc::set_datetime(&dt);
 }
 
+inline void dont(){
+    ui::set_page(6); // Go to Datalogger page if logging was active before reboot
+    logger::start_logging(); // Recover logging state after reboot
+}
+
 // Main function
 int main()
 {
-    // Default configurations (user-defined)
-    fgm::set_sensor_modes((fgm::SENSOR_MODE[fgm::SENSOR_CH_COUNT]){fgm::SENSOR_MODE::FREQ, fgm::SENSOR_MODE::FREQ, fgm::SENSOR_MODE::DISABLED, fgm::SENSOR_MODE::DISABLED});
-    fgm::set_sample_counts((uint[fgm::SENSOR_CH_COUNT]){128, 128, 128, 128});
-    fgm::set_median_offsets((uint[fgm::SENSOR_CH_COUNT]){32, 32, 32, 32});
-    fgm::save_sample_counts();
-    fgm::save_median_offsets();
-    logger::set_log_interval(6000);
-
     // Hardware & Driver initialization
     stdio_init_all();
-    status::init_led();
+    status::init_led(); // nvm uses status, initialize beforehand
+    if (!nvm::load()) nvm::load_defaults(); // Load from NVM or defaults when failed
     fgm::init_sensors();
     disp::init_display();
     rtc::init_rtc();
     fs::init_sd();
     ctrl::init_btn();
     ui::init();
+    bool die = logger::logging_status == logger::LOG_STATUS::LOGGING;
+    
+    if(die){
+        dont();
+    }
 
     //set_rtc();
     
@@ -75,5 +67,6 @@ int main()
         rtc::loop();
         ui::draw_page();
         logger::loop();
+        status::loop();
     }
 }

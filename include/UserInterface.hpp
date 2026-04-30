@@ -32,7 +32,7 @@ namespace ui{
     extern uint8_t font_height;
 
     constexpr uint8_t PAGE_COUNT = 8;
-    constexpr uint8_t SETTING_COUNT = 6;
+    constexpr uint8_t SETTING_COUNT = 8;
     
     struct page{
         const char* title;
@@ -46,6 +46,7 @@ namespace ui{
     
     void init();
     void draw_page();
+    void set_page(uint8_t page_to_set);
 
     namespace settings{
         struct option{

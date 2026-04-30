@@ -9,7 +9,7 @@
 #pragma once
 
 // Hardware configuration. Available options: HW_V1, HW_V2
-#define HW_V2
+#define HW_V1
 
 // Hardware ports / pinouts for the MAG-Station V1
 #ifdef HW_V1

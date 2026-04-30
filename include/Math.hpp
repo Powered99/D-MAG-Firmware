@@ -20,5 +20,8 @@ namespace math{
     double get_filtered_average(double* array, size_t array_length, size_t median_offset); // Returns filtered median average.
 
     constexpr size_t MAX_FILTERED_COUNT = 128;
+
+    int day_of_year(int year, int month, int day);
+    int day_of_year(ds3231_datetime_t dt);
 };
 

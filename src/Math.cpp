@@ -7,7 +7,7 @@
  */
 
 #include "Math.hpp"
-
+#include <time.h>
 
 namespace math{
     // Extracts the median values from a sorted array - target array should have [2x offset] elements.
@@ -69,5 +69,17 @@ namespace math{
             sum += filtered_values[i];
         }
         return sum / (double) median_element_count;
+    }
+
+    int day_of_year(int year, int month, int day) {
+        struct tm t = {0};
+        t.tm_year = year - 1900;
+        t.tm_mon  = month - 1;
+        t.tm_mday = day;
+        mktime(&t);
+        return t.tm_yday + 1;  // tm_yday is 0-based
+    }
+    int day_of_year(ds3231_datetime_t dt){
+        return day_of_year(dt.year, dt.month, dt.day);
     }
 }

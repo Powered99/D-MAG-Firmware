@@ -8,17 +8,70 @@
 
 #include "Datalogger.hpp"
 #include "Hardware.hpp"
+#include "Config.hpp"
+#include "Formats.hpp"
+#include "Math.hpp"
 
 namespace logger{
     LOG_STATUS logging_status = LOG_STATUS::IDLE;
-    bool LOG_CHANNELS[fgm::SENSOR_CH_COUNT];
-    uint32_t log_interval_ms = 1000;
-
+    
     uint8_t log_start_hour;
     
-
     void set_log_interval(uint32_t interval_ms){
         log_interval_ms = interval_ms;
+    }
+
+    // Write entire IAGA2002 header
+    void iaga_header() {
+        char buf[72];
+        fs::SD_STATUS status;
+
+        // Header entry lines
+        for(uint8_t i = 0; i < IAGA2002::HEADER_ENTRY_COUNT; i++){
+            IAGA2002::make_header_line(buf, sizeof(buf), IAGA2002::HEADER[i]);
+            status = fs::write_file(buf);
+            if(status == fs::SD_STATUS::SD_ERR){
+                logging_status = LOG_STATUS::ERROR;
+                return;
+            }
+        }
+        // Header comment lines
+        for(uint8_t i = 0; i < IAGA2002::COMMENT_ENTRY_COUNT; i++){
+            IAGA2002::make_header_line(buf, sizeof(buf), IAGA2002::COMMENTS[i]);
+            status = fs::write_file(buf);
+            if(status == fs::SD_STATUS::SD_ERR){
+                logging_status = LOG_STATUS::ERROR;
+                return;
+            }
+        }
+        IAGA2002::make_column_line(buf, sizeof(buf));
+        // Write column header line to file
+        status = fs::write_file(buf);
+        if(status == fs::SD_STATUS::SD_ERR){
+            logging_status = LOG_STATUS::ERROR;
+            return;
+        }
+    }
+
+
+    
+    // Write single IAGA2002 line
+    fs::SD_STATUS iaga_line(ds3231_datetime_t dt) {
+        char buf[72];
+        uint8_t logged_element_count = (LOG_ELEMENT_COUNT < IAGA2002::max_sensor_channels) ? LOG_ELEMENT_COUNT : IAGA2002::max_sensor_channels;
+        float sensor_values[logged_element_count];
+        for(uint8_t ch = 0; ch < logged_element_count; ch++){
+            float value = 99999.0f;
+            if(LOG_ELEMENTS[ch].element == ELEMENTS::MAG && fgm::SENSOR_STATES[LOG_ELEMENTS[ch].channel] == fgm::SENSOR_STATE::ACTIVE){
+                value = fgm::get_nT(LOG_ELEMENTS[ch].channel);
+            }else if(LOG_ELEMENTS[ch].element == ELEMENTS::TEMP){
+                value = rtc::get_temperature();
+            }
+            sensor_values[ch] = value;
+        }
+        IAGA2002::make_data_line(buf, sizeof(buf), dt, sensor_values, logged_element_count);
+        fs::SD_STATUS status = fs::write_file(buf);    
+        return status;
     }
 
     fs::SD_STATUS start_logging(){
@@ -41,23 +94,11 @@ namespace logger{
 
         fs::SD_STATUS sd_status = fs::open_file(fs::SD_MODE::SD_WRITE_APPEND, buf);
 
-        // 1st row: eg. Time CH0 CH1 CH2...
-        if(sd_status != fs::SD_STATUS::SD_ERR){
-            snprintf(buf, sizeof(buf),(char*)"Time");
-            for(int ch = 0; ch < fgm::SENSOR_CH_COUNT; ch++){
-                if(fgm::SENSOR_MODES[ch] != fgm::SENSOR_MODE::DISABLED){
-                    LOG_CHANNELS[ch] = true;
-                    char chbuf[10];
-                    snprintf(chbuf, sizeof(chbuf), "\tCH%d",ch);
-                    strcat(buf, chbuf);
-                }else{
-                    LOG_CHANNELS[ch] = false;
-                }
-            }
-            
-            sd_status = fs::write_file(buf);
+        switch(DATA_FORMAT){
+            case FORMATS::IAGA2002: iaga_header(); break;
+            //case FORMATS::DMAG2026: dmag_header(); break;
         }
-
+        //}
         logging_status = (sd_status == fs::SD_STATUS::SD_ERR) ? LOG_STATUS::ERROR : LOG_STATUS::LOGGING;
         return sd_status;
     }
@@ -67,34 +108,25 @@ namespace logger{
         logging_status = LOG_STATUS::IDLE;
         //fs::unmount_sd();
     }
-    void log(){
-        char buf[100];
-
+    
+    void log(){  
         ds3231_datetime_t dt;
         rtc::get_datetime(&dt);
-        
-        snprintf(buf, sizeof(buf), "\n%02d:%02d:%02d:%03d", dt.hour, dt.minutes, dt.seconds, rtc::get_micros()/1000);
-        for(int ch = 0; ch < fgm::SENSOR_CH_COUNT; ch++){
-            if(LOG_CHANNELS[ch]){
-                char ch_buf[16];
-                if(fgm::SENSOR_STATES[ch] == fgm::SENSOR_STATE::ACTIVE) snprintf(ch_buf, sizeof(ch_buf), "\t%f",fgm::get_nT(ch));
-                else if(fgm::SENSOR_STATES[ch] == fgm::SENSOR_STATE::INACTIVE) snprintf(ch_buf, sizeof(ch_buf), "\tINACTIVE");
-                else snprintf(ch_buf, sizeof(ch_buf), "\tDISABLED");
-                strcat(buf, ch_buf);
-            }
-        }
 
+        fs::SD_STATUS status;
+
+        switch(DATA_FORMAT){
+            case FORMATS::IAGA2002: status = iaga_line(dt); break; // iaga_line
+            //case FORMATS::DMAG2026: break; // dmag_line WIP
+        };
+        
         // start new file when new hour starts
-        rtc::get_datetime(&dt);
         if(dt.hour != log_start_hour){
             stop_logging();
             sleep_ms(100);
             start_logging();
         }
         
-        
-
-        fs::SD_STATUS status = fs::write_file(buf);
         if(status == fs::SD_STATUS::SD_ERR) logging_status = LOG_STATUS::ERROR;
     }
     void loop(){

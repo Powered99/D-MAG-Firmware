@@ -21,6 +21,7 @@ namespace gfx{
     void line(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint16_t color);
     void text(char* text, uint16_t x, uint16_t y, uint8_t font, uint16_t color);
     size_t smart_text(char* text, uint16_t x, uint16_t y, display_Font_name_e font, uint16_t color, size_t prev_text_length, uint8_t prev_font_width, uint8_t prev_font_height);
+    void scrolling_text(char* text, uint16_t x, uint16_t y, uint16_t width, display_Font_name_e font, uint16_t color, uint8_t font_width, uint8_t font_height, int32_t& pixel_offset, absolute_time_t& last_update, uint32_t update_interval_ms, uint32_t scroll_speed_px, uint8_t gap_px);
     uint8_t progress_bar(uint8_t x, uint8_t y, uint8_t width, uint8_t height, float progress, uint8_t prev_bar_width, uint16_t outline_color, uint16_t value_color, bool inverted);
     uint8_t progress_bar(uint8_t x, uint8_t y, uint8_t width, uint8_t height, float value, float min_value, float max_value, uint8_t prev_bar_width, uint16_t outline_color, uint16_t value_color, bool inverted);
 }

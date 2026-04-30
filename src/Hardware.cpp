@@ -9,6 +9,8 @@
 #include "Hardware.hpp"
 #include "Graphics.hpp"
 #include "Math.hpp"
+#include "Config.hpp"
+#include "Datalogger.hpp"
 
 #include <functional>
 #include <vector>
@@ -37,7 +39,6 @@ void init_display(){
 namespace fgm{
 
 // Sensor modes & states
-SENSOR_MODE SENSOR_MODES[SENSOR_CH_COUNT] = {SENSOR_MODE::DISABLED};
 SENSOR_STATE SENSOR_STATES[SENSOR_CH_COUNT];
 
 // Initialized flags for sensor channels
@@ -47,13 +48,8 @@ bool I2C_INITIALIZED[SENSOR_CH_COUNT]; // 3rd-harmonic based sensor driver (via 
 
 bool adc_initialized = false; // ADC initialized flag
 
-CALIB_DATA SENSOR_CALIBRATIONS[SENSOR_CH_COUNT]; // Sensor calibration data (MIN, MAX values) // TODO: load/save from non-volatile memory
-
 uint SET_SAMPLE_COUNT[SENSOR_CH_COUNT]; // Configured sample count buffer
-uint SAMPLE_COUNT[SENSOR_CH_COUNT]; // Actual sample count used by the driver
 uint SET_MEDIAN_SAMPLE_OFFSET[SENSOR_CH_COUNT]; // Configuration buffer for median sample offset
-uint MEDIAN_SAMPLE_OFFSET[SENSOR_CH_COUNT]; // Offset of median samples (MEDIAN_SAMPLE_OFFSET <- center -> MEDIAN_SAMPLE_OFFSET), total median samples: 2x offset
-
 absolute_time_t last_pwm_read_timestamp[SENSOR_CH_COUNT];
 uint16_t sample_index[SENSOR_CH_COUNT] = {0};
 
@@ -462,13 +458,30 @@ int get_state(size_t button_index){
 }
 
 namespace status{
+    absolute_time_t timer_timestamp;
+    absolute_time_t timer_duration;
+    bool timer_led_state;
+    bool timer_set = false;
+
     void init_led(){
-        // Status LED
         gpio_set_function(STATUS_LED, GPIO_FUNC_SIO);
         gpio_set_dir(STATUS_LED, GPIO_OUT);
     }
     void set_led(bool state){
         gpio_put(STATUS_LED, state);
+    }
+    void set_led(bool state, absolute_time_t duration){
+        set_led(state);
+        timer_led_state = !state;
+        timer_set = true;
+        timer_timestamp = get_absolute_time();
+        timer_duration = duration;
+    }
+    void loop(){
+        if(timer_set && get_absolute_time() - timer_timestamp >= timer_duration){
+            set_led(timer_led_state);
+            timer_set = false;
+        }
     }
 }
 
@@ -521,4 +534,137 @@ namespace rtc{
     void get_datetime(ds3231_datetime_t *datetime){
         ds3231_get_datetime(datetime, &ds3231);
     }
+
+    float get_temperature(){
+        float temperature;
+        ds3231_get_temperature(&temperature, &ds3231);
+        return temperature;
+    }
+}
+
+
+
+
+
+namespace nvm { // Non-volatile-memory (flash) storage for settings / configurations / calibrations
+
+static uint32_t compute_checksum(const Block& b) {
+    uint32_t sum = 0;
+    auto acc = [&](const void* data, size_t len) {
+        const uint8_t* p = reinterpret_cast<const uint8_t*>(data);
+        for (size_t i = 0; i < len; ++i) sum += p[i];
+    };
+
+    acc(&b.magic,           sizeof(b.magic));
+    acc(&b.version,         sizeof(b.version));
+    acc(&b.channel_count,   sizeof(b.channel_count));
+    acc(&b.data_format,     sizeof(b.data_format));
+    acc(&b.log_interval_ms, sizeof(b.log_interval_ms));
+    acc(&b.logging_status,  sizeof(b.logging_status));
+
+    for (uint8_t i = 0; i < MAX_CH; ++i) {
+        acc(&b.calibrations[i].offset, sizeof(double));
+        acc(&b.calibrations[i].slope,  sizeof(double));
+        acc(&b.calibrations[i].min,    sizeof(float));
+        acc(&b.calibrations[i].max,    sizeof(float));
+        acc(&b.sensor_modes[i],        sizeof(int8_t));
+        acc(&b.sample_counts[i],       sizeof(uint32_t));
+        acc(&b.median_sample_offsets[i], sizeof(uint32_t));
+    }
+
+    return sum;
+}
+
+static const Block* flash_block() {
+    return reinterpret_cast<const Block*>(XIP_BASE + FLASH_OFFSET);
+}
+
+static Block pack() {
+    Block b;
+    memset(&b, 0, sizeof(Block));  // guarantees all padding bytes are zero
+
+    b.magic           = MAGIC;
+    b.version         = VERSION;
+    b.channel_count   = fgm::SENSOR_CH_COUNT;
+    b.data_format     = static_cast<uint8_t>(logger::DATA_FORMAT);
+    b.log_interval_ms = logger::log_interval_ms;
+    b.logging_status  = static_cast<uint8_t>(logger::logging_status);
+
+    for (uint8_t i = 0; i < fgm::SENSOR_CH_COUNT; ++i) {
+            b.calibrations[i] = { fgm::SENSOR_CALIBRATIONS[i].offset,
+                                fgm::SENSOR_CALIBRATIONS[i].slope,
+                                fgm::SENSOR_CALIBRATIONS[i].MIN,
+                                fgm::SENSOR_CALIBRATIONS[i].MAX };
+        b.sensor_modes[i]          = static_cast<int8_t>(fgm::SENSOR_MODES[i]);
+        b.sample_counts[i]         = fgm::SAMPLE_COUNT[i];
+        b.median_sample_offsets[i] = fgm::MEDIAN_SAMPLE_OFFSET[i];
+    }
+
+    b.checksum = compute_checksum(b);
+    return b;
+}
+
+static void unpack(const Block& b) {
+    const uint8_t ch = (b.channel_count < fgm::SENSOR_CH_COUNT)
+                        ? b.channel_count : fgm::SENSOR_CH_COUNT;
+
+    for (uint8_t i = 0; i < ch; ++i) {
+        fgm::SENSOR_CALIBRATIONS[i].offset = b.calibrations[i].offset;
+        fgm::SENSOR_CALIBRATIONS[i].slope  = b.calibrations[i].slope;
+        fgm::SENSOR_CALIBRATIONS[i].MIN    = b.calibrations[i].min;
+        fgm::SENSOR_CALIBRATIONS[i].MAX    = b.calibrations[i].max;
+        fgm::SENSOR_MODES[i]               = static_cast<fgm::SENSOR_MODE>(b.sensor_modes[i]);
+        fgm::SAMPLE_COUNT[i]               = b.sample_counts[i];
+        fgm::MEDIAN_SAMPLE_OFFSET[i]       = b.median_sample_offsets[i];
+    }
+
+    logger::DATA_FORMAT     = static_cast<logger::FORMATS>(b.data_format);
+    logger::log_interval_ms = b.log_interval_ms;
+    logger::logging_status  = static_cast<logger::LOG_STATUS>(b.logging_status);
+    fgm::save_sample_counts();
+    fgm::save_median_offsets();
+}
+
+bool check() {
+    const Block* b = flash_block();
+    if (b->magic    != MAGIC)             return false;
+    if (b->version  != VERSION)           return false;
+    if (b->checksum != compute_checksum(*b)) return false;
+    return true;
+}
+
+bool load() {
+    const Block* b = flash_block();
+    if (!check()) return false;
+    unpack(*b);
+    status::set_led(true, 500*250); // Indicate successful load with LED
+    return true;
+}
+
+void save() {
+    status::set_led(true, 1000*500); // Indicate saving with LED
+    Block b = pack();
+
+    uint8_t page[FLASH_PAGE_SIZE] = {};
+    memcpy(page, &b, sizeof(Block));
+
+    uint32_t irq = save_and_disable_interrupts();
+    flash_range_erase(FLASH_OFFSET, FLASH_SECTOR_SIZE);
+    flash_range_program(FLASH_OFFSET, page, FLASH_PAGE_SIZE);
+    restore_interrupts(irq);
+    
+    const uint8_t* raw = reinterpret_cast<const uint8_t*>(XIP_BASE + FLASH_OFFSET);
+}
+
+void load_defaults(){
+    fgm::set_sensor_modes((fgm::SENSOR_MODE[fgm::SENSOR_CH_COUNT]){fgm::SENSOR_MODE::FREQ, fgm::SENSOR_MODE::FREQ, fgm::SENSOR_MODE::DISABLED, fgm::SENSOR_MODE::DISABLED});
+    //fgm::set_sensor_modes((fgm::SENSOR_MODE[fgm::SENSOR_CH_COUNT]){fgm::SENSOR_MODE::FREQ, fgm::SENSOR_MODE::FREQ, fgm::SENSOR_MODE::FREQ, fgm::SENSOR_MODE::FREQ});
+    fgm::set_sample_counts((uint[fgm::SENSOR_CH_COUNT]){128, 128, 128, 128});
+    //fgm::set_sample_counts((uint[fgm::SENSOR_CH_COUNT]){1, 1, 1, 1});
+    fgm::set_median_offsets((uint[fgm::SENSOR_CH_COUNT]){32, 32, 32, 32});
+    fgm::save_sample_counts();
+    fgm::save_median_offsets();
+    logger::set_log_interval(6000);
+}
+
 }

@@ -46,6 +46,52 @@ size_t smart_text(char* text,
     return text_length;
 }
 
+void scrolling_text(char* text,
+        uint16_t x, uint16_t y, uint16_t width,
+        display_Font_name_e font, uint16_t color,
+        uint8_t font_width, uint8_t font_height,
+        int32_t& pixel_offset,
+        absolute_time_t& last_update,
+        uint32_t update_interval_ms,
+        uint32_t scroll_speed_px,
+        uint8_t gap_px
+){
+    // update pixel offset only when interval passed
+    absolute_time_t now = get_absolute_time();
+    if(absolute_time_diff_us(last_update, now) < (int64_t)update_interval_ms * 1000) return;
+    last_update = now;
+    pixel_offset += (int32_t)scroll_speed_px; // move specified pixels to the left
+
+    size_t text_length = strlen(text);
+    if(text_length == 0) return;
+
+    int32_t loop_pixels = (int32_t)(text_length * font_width) + gap_px;
+    if(pixel_offset >= loop_pixels) pixel_offset = 0;
+
+    // how many characters we need to render (add one for partial glyph)
+    size_t chars_visible = (width / font_width) + 1;
+    char window[chars_visible + 1];
+
+    int32_t char_offset = pixel_offset / font_width;
+    int32_t sub_offset  = pixel_offset % font_width;
+
+    size_t gap_chars = gap_px / font_width;
+    for(size_t i = 0; i < chars_visible; ++i){
+        size_t idx = (char_offset + i) % (text_length + gap_chars);
+        window[i] = (idx < text_length) ? text[idx] : ' ';
+    }
+    window[chars_visible] = '\0';
+
+    disp::display.fillRect(x, y, width, font_height, background_color);
+    disp::display.setFont(font);
+    disp::display.setTextColor(color, background_color);
+    disp::display.writeCharString(x - sub_offset, y, window);
+    int16_t rect_x = x - font_width;
+    if(rect_x < 0) rect_x = 0;
+    disp::display.fillRect(rect_x, y, font_width, font_height, background_color); // Clear ghosting on the left edge
+}
+
+
 void line(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint16_t color){
     disp::display.drawLine(x1, y1, x2, y2, color);
 }

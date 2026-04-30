@@ -14,8 +14,12 @@
 #include "hardware/pwm.h"
 #include "hardware/adc.h"
 #include "pico/multicore.h"
+#include "hardware/flash.h"
+#include "hardware/sync.h"
 #include "pins.hpp"
 #include <functional>
+#include "Config.hpp"
+#include "Datalogger.hpp"
 
 
 namespace disp{
@@ -27,25 +31,10 @@ namespace disp{
 }
 
 namespace fgm{
-    enum class SENSOR_MODE: int8_t {
-        DISABLED = -1,
-        FREQ = 0,
-        HARMONIC = 1,
-        ANALOG = 2
-    };
     enum class SENSOR_STATE : int8_t {
         DISABLED = -1,
         INACTIVE = 0,
         ACTIVE = 1
-    };
-    
-    constexpr float B_MIN = -50e-6f; // Lowest value in earth's magnetic field (-50uT)
-    constexpr float B_MAX = 50e-6f; // Highest value in earth's magnetic field (50uT)
-    struct CALIB_DATA{
-        float MIN = 8.5e-6f;
-        float MAX = 25e-6f;
-        double offset = 0.0f;
-        double slope = 0.0f;
     };
     struct freq_sample{
         uint64_t delta_t = 0;
@@ -54,19 +43,13 @@ namespace fgm{
 
     constexpr float ANALOG_CONVERSION_FACTOR = 3.274f / (1 << 12); // system voltage / 12bit max value
 
-    constexpr uint8_t SENSOR_CH_COUNT = 4; // Edit to change sensor count
-
     constexpr uint MAX_SAMPLE_COUNT = 2048; // Max sample count for frequency measurement
 
     extern uint SET_SAMPLE_COUNT[SENSOR_CH_COUNT]; // Configuration buffer for sample count
-    extern uint SAMPLE_COUNT[SENSOR_CH_COUNT]; // Actual used sample count (set with set_sample_count)
     extern uint SET_MEDIAN_SAMPLE_OFFSET[SENSOR_CH_COUNT]; // Configuration buffer for median sample offset
-    extern uint MEDIAN_SAMPLE_OFFSET[SENSOR_CH_COUNT]; // Offset of median samples (MEDIAN_SAMPLE_OFFSET <- center -> MEDIAN_SAMPLE_OFFSET), total median samples: 2x offset
-
-    extern SENSOR_MODE SENSOR_MODES[SENSOR_CH_COUNT];
+    
     extern SENSOR_STATE SENSOR_STATES[SENSOR_CH_COUNT];
-    extern CALIB_DATA SENSOR_CALIBRATIONS[SENSOR_CH_COUNT];
-
+    
     extern uint16_t sample_index[SENSOR_CH_COUNT];
 
     extern double periods[SENSOR_CH_COUNT]; // delta between sensor output ticks
@@ -100,6 +83,10 @@ namespace fgm{
 
     void calculate_nT(uint8_t ch);
     float get_nT(uint8_t ch);
+}
+
+namespace non_volatile_memory{
+
 }
 
 namespace ctrl{
@@ -147,9 +134,49 @@ namespace rtc{
     void get_datetime(ds3231_datetime_t *datetime);
     uint64_t get_micros();
     void loop();
+    float get_temperature();
 }
 
 namespace status{
     void init_led();
     void set_led(bool state);
+    void set_led(bool state, absolute_time_t duration);
+    void loop();
+}
+
+namespace nvm { // Non-volatile-memory (flash) storage for settings / configurations / calibrations
+
+    constexpr uint32_t FLASH_OFFSET = PICO_FLASH_SIZE_BYTES - FLASH_SECTOR_SIZE;
+    constexpr uint32_t MAGIC        = 0xD4A60001;
+    constexpr uint16_t VERSION      = 2;
+    constexpr uint8_t  MAX_CH       = 6;
+
+    struct CalibEntry {
+        double offset, slope;
+        float  min, max;
+    };
+
+    struct Block {
+        uint32_t magic;
+        uint16_t version;
+        uint8_t  channel_count;
+        uint8_t  _pad;
+        CalibEntry calibrations[MAX_CH];
+        int8_t     sensor_modes[MAX_CH];
+        uint32_t   sample_counts[MAX_CH];
+        uint32_t   median_sample_offsets[MAX_CH];
+        uint8_t    data_format;
+        uint8_t    _pad2[3];
+        uint32_t   log_interval_ms;
+        uint32_t   checksum;
+        uint8_t    logging_status;
+    };
+
+    static_assert(sizeof(Block) <= FLASH_PAGE_SIZE, "nvm::Block exceeds one flash page");
+
+    void save();
+    bool check();
+    bool load();
+    void load_defaults();
+
 }

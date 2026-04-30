@@ -10,6 +10,8 @@
 #include "Datalogger.hpp"
 #include <limits>
 #include "math.h"
+#include "config.hpp"
+#include "Formats.hpp"
 
 namespace ui{
 
@@ -223,6 +225,7 @@ namespace settings{
     bool setting_open = false;
     uint8_t setting_count = SETTING_COUNT;
     uint8_t selected_setting = 0;
+    bool config_changes = false;
 
     // Setting options & executeables
 
@@ -233,7 +236,9 @@ namespace settings{
         {.text="FGM - Calibrate", .exec=fgm_conf::calib::draw, .init=fgm_conf::calib::init},
         {.text="FGM - Sampling", .exec=fgm_conf::sampling::draw, .init=fgm_conf::sampling::init},
         {.text="LOG - Set interval", .exec=log::interval::draw, .init=log::interval::init},
-        {.text="Exit settings", .exec=exit_settings}
+        {.text="NVM - Factory reset", .exec = [](){ nvm::load_defaults(); nvm::save(); }},
+        {.text="NVM - Load stored", .exec = nvm::load },
+        {.text="Save & Exit", .exec=exit_settings}
     };
 
     // Setting option pages
@@ -309,6 +314,7 @@ namespace settings{
                 exit_setting();
             }
             void submit(){
+                config_changes = true;
                 apply_ch();
                 settings::fgm_conf::modes::exit();
             }
@@ -423,6 +429,7 @@ namespace settings{
                 draw();
             }
             void calib_submit(){
+                config_changes = true;
                 apply_ch();
                 calib_exit();
             }
@@ -678,6 +685,7 @@ namespace settings{
                 exit_setting();
             }
             void submit(){
+                config_changes = true;
                 submit_sample_count();
                 exit();
             }
@@ -868,6 +876,7 @@ namespace settings{
                 exit_setting();
             }
             void submit(){
+                config_changes = true;
                 apply_interval();
                 exit();
             }
@@ -943,10 +952,11 @@ namespace settings{
     }
 
     void draw_settings_page(){
-        if(!setting_open) draw_setting_list();
-        else{
+        if(setting_open){ 
             draw_setting_title();
             settings[selected_setting].exec();
+        }else{
+            draw_setting_list();
         } 
     }
 
@@ -961,6 +971,10 @@ namespace settings{
     }
 
     void exit_settings(){
+        if(config_changes){
+            nvm::save();
+            config_changes = false;
+        }
         selected_setting = 0;
         setting_open = false;
         settings::controls::remove_controls();
@@ -994,7 +1008,7 @@ namespace settings{
 
     void select_setting(){
         if(!setting_open){
-            if(selected_setting != SETTING_COUNT - 1){
+            if(selected_setting != SETTING_COUNT - 1 && settings[selected_setting].init){
                 setting_open = true;
                 settings::controls::set_controls(false);
                 if(settings[selected_setting].init) settings[selected_setting].init();
@@ -1015,10 +1029,23 @@ namespace settings{
 
 
 void draw_info_page(){
-    gfx::text((char*)"MagFirmware v1.6", 0, status_bar_margin + title_margin, font, base_text_color);
+    char buf[32];
+    
+    snprintf(buf, sizeof(buf), "D-MAG-Firmware");
+    size_t buf_len = strlen(buf);
+    gfx::text(buf, 0, status_bar_margin + title_margin, font, base_text_color);
+    snprintf(buf, sizeof(buf), "v%s", FIRMWARE_VERSION);
+    static int32_t prev_scroll_offset1 = 0; static absolute_time_t prev_update1 = nil_time; gfx::scrolling_text(buf, (buf_len + 1) * font_width, status_bar_margin + title_margin, font_width * 4, font, base_text_color, font_width, font_height, prev_scroll_offset1, prev_update1, 100, 1, 2 * font_width);
+    
     gfx::text((char*)"-by Dominik Kultys", 0, status_bar_margin + title_margin + line_margin, font, base_text_color);
-    gfx::text((char*)"MCU: RP2040", 0, status_bar_margin + title_margin + 2 * line_margin, font, base_text_color);
-    gfx::text((char*)"Sensors: FGM-3+", 0, status_bar_margin + title_margin + 3 * line_margin, font, base_text_color);
+    gfx::text((char*)"Sensors: Freq/Volt", 0, status_bar_margin + title_margin + 2 * line_margin, font, base_text_color);
+    
+    snprintf(buf, sizeof(buf), "Log Format");
+    buf_len = strlen(buf);
+    gfx::text(buf, 0, status_bar_margin + title_margin + 3 * line_margin, font, base_text_color);
+    snprintf(buf, sizeof(buf), "v%s", FIRMWARE_VERSION);
+    snprintf(buf, sizeof(buf), "%s", logger::DATA_FORMAT == logger::FORMATS::IAGA2002 ? "IAGA2002" : logger::DATA_FORMAT == logger::FORMATS::DMAG2026 ? "DMAG2026" : " Unknown");
+    static int32_t prev_scroll_offset2 = 0; static absolute_time_t prev_update2 = nil_time; gfx::scrolling_text(buf, (buf_len + 1) * font_width, status_bar_margin + title_margin + 3 * line_margin, font_width * 8, font, base_text_color, font_width, font_height, prev_scroll_offset2, prev_update2, 100, 2, 3 * font_width);
 }
 
 void draw_all_page(){
@@ -1142,33 +1169,34 @@ namespace logging{
         toggle_held = false;
     }
     void toggle_log(){
-        if(logger::logging_status == logger::LOG_STATUS::LOGGING) logger::stop_logging();
-        else if(logger::logging_status == logger::LOG_STATUS::IDLE) logger::start_logging();
+        if(logger::logging_status == logger::LOG_STATUS::LOGGING){ logger::stop_logging(); nvm::save(); }
+        else if(logger::logging_status == logger::LOG_STATUS::IDLE){ logger::start_logging(); nvm::save(); }
         gfx::clear();
     }
     void draw(){
         static size_t startstop_len;
 
-        char buf[20];
+        char buf[32];
         int y = status_bar_margin + title_margin;
-        char* status_text = (char*)((logger::logging_status == logger::LOG_STATUS::LOGGING) ? "Logging channels:" : (logger::logging_status == logger::LOG_STATUS::IDLE && fs::sd_available) ? "Logger idle" : "SD error; restart required");
-        
+        char* status_text = (char*)((logger::logging_status == logger::LOG_STATUS::LOGGING) ? "Logging elements:" : (logger::logging_status == logger::LOG_STATUS::IDLE && fs::sd_available) ? "Logger idle" : "SD error; restart required");
         gfx::text(status_text, 0, y, font, subtitle_text_color);
 
         y += subtitle_margin;
         if(logger::logging_status == logger::LOG_STATUS::LOGGING){
             
             snprintf(buf, sizeof(buf), "");
-            for(int ch = 0; ch < fgm::SENSOR_CH_COUNT; ch++){
-                if(!logger::LOG_CHANNELS[ch]) continue;
+            for(uint8_t i = 0; i < LOG_ELEMENT_COUNT; i++){
                 char ch_buf[7];
-                strcat(buf,(ch == 0) ? "" : ", ");
-                snprintf(ch_buf, sizeof(ch_buf), "CH%d", ch);
+                strcat(buf,(i == 0) ? "" : ", ");
+                snprintf(ch_buf, sizeof(ch_buf), "%s", LOG_ELEMENTS[i].label);
                 strcat(buf, ch_buf);
             }
             gfx::text(buf, 0, y, font, positive_text_color);
             y += line_margin;
-            snprintf(buf, sizeof(buf), "Interval: %dms.",logger::log_interval_ms);
+            snprintf(buf, sizeof(buf), "Interval: %dms",logger::log_interval_ms);
+            gfx::text(buf, 0, y, font, subtitle_text_color);
+            y += line_margin;
+            snprintf(buf, sizeof(buf), "Format: %s", logger::DATA_FORMAT == logger::FORMATS::IAGA2002 ? "IAGA-2002" : logger::DATA_FORMAT == logger::FORMATS::DMAG2026 ? "DMAG-2026" : "Unknown");
             gfx::text(buf, 0, y, font, subtitle_text_color);
             y += line_margin;
         }
