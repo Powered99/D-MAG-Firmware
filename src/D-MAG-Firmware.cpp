@@ -48,18 +48,10 @@ void set_rtc(){
 // Main function
 int main()
 {
-    // Default configurations (user-defined)
-    //fgm::set_sensor_modes((fgm::SENSOR_MODE[fgm::SENSOR_CH_COUNT]){fgm::SENSOR_MODE::FREQ, fgm::SENSOR_MODE::FREQ, fgm::SENSOR_MODE::DISABLED, fgm::SENSOR_MODE::DISABLED});
-    fgm::set_sensor_modes((fgm::SENSOR_MODE[fgm::SENSOR_CH_COUNT]){fgm::SENSOR_MODE::FREQ, fgm::SENSOR_MODE::FREQ, fgm::SENSOR_MODE::FREQ, fgm::SENSOR_MODE::FREQ});
-    //fgm::set_sample_counts((uint[fgm::SENSOR_CH_COUNT]){128, 128, 128, 128});
-    fgm::set_sample_counts((uint[fgm::SENSOR_CH_COUNT]){1, 1, 1, 1});
-    fgm::set_median_offsets((uint[fgm::SENSOR_CH_COUNT]){32, 32, 32, 32});
-    fgm::save_sample_counts();
-    fgm::save_median_offsets();
-    //logger::set_log_interval(6000);
-    logger::set_log_interval(1000);
     // Hardware & Driver initialization
     stdio_init_all();
+    sleep_ms(2000); // Wait for USB to initialize
+    if (!nvm::load()) nvm::load_defaults(); // Load from NVM or defaults when failed
     status::init_led();
     fgm::init_sensors();
     disp::init_display();
@@ -77,5 +69,6 @@ int main()
         rtc::loop();
         ui::draw_page();
         logger::loop();
+        status::loop();
     }
 }

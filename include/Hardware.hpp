@@ -14,6 +14,8 @@
 #include "hardware/pwm.h"
 #include "hardware/adc.h"
 #include "pico/multicore.h"
+#include "hardware/flash.h"
+#include "hardware/sync.h"
 #include "pins.hpp"
 #include <functional>
 #include "Config.hpp"
@@ -137,4 +139,42 @@ namespace rtc{
 namespace status{
     void init_led();
     void set_led(bool state);
+    void set_led(bool state, absolute_time_t duration);
+    void loop();
+}
+
+namespace nvm { // Non-volatile-memory (flash) storage for settings / configurations / calibrations
+
+    constexpr uint32_t FLASH_OFFSET = PICO_FLASH_SIZE_BYTES - FLASH_SECTOR_SIZE;
+    constexpr uint32_t MAGIC        = 0xD4A60001;
+    constexpr uint16_t VERSION      = 1;
+    constexpr uint8_t  MAX_CH       = 6;
+
+    struct CalibEntry {
+        double offset, slope;
+        float  min, max;
+    };
+
+    struct Block {
+        uint32_t magic;
+        uint16_t version;
+        uint8_t  channel_count;
+        uint8_t  _pad;
+        CalibEntry calibrations[MAX_CH];
+        int8_t     sensor_modes[MAX_CH];
+        uint32_t   sample_counts[MAX_CH];
+        uint32_t   median_sample_offsets[MAX_CH];
+        uint8_t    data_format;
+        uint8_t    _pad2[3];
+        uint32_t   log_interval_ms;
+        uint32_t   checksum;
+    };
+
+    static_assert(sizeof(Block) <= FLASH_PAGE_SIZE, "nvm::Block exceeds one flash page");
+
+    void save();
+    bool check();
+    bool load();
+    void load_defaults();
+
 }

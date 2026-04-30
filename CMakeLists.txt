@@ -88,6 +88,8 @@ target_link_libraries(D-MAG-Firmware
         hardware_spi
         hardware_adc
         hardware_pio
+        hardware_flash
+        hardware_sync
         pico_multicore
         FatFs_SPI
         pico-ds3231

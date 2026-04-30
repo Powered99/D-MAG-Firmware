@@ -235,6 +235,8 @@ namespace settings{
         {.text="FGM - Calibrate", .exec=fgm_conf::calib::draw, .init=fgm_conf::calib::init},
         {.text="FGM - Sampling", .exec=fgm_conf::sampling::draw, .init=fgm_conf::sampling::init},
         {.text="LOG - Set interval", .exec=log::interval::draw, .init=log::interval::init},
+        {.text="NVM - Save to flash", .exec=nvm::save},
+        {.text="NVM - Factory reset", .exec = [](){ nvm::load_defaults(); nvm::save(); }},
         {.text="Exit settings", .exec=exit_settings}
     };
 
@@ -945,10 +947,11 @@ namespace settings{
     }
 
     void draw_settings_page(){
-        if(!setting_open) draw_setting_list();
-        else{
+        if(setting_open){ 
             draw_setting_title();
             settings[selected_setting].exec();
+        }else{
+            draw_setting_list();
         } 
     }
 
@@ -996,7 +999,7 @@ namespace settings{
 
     void select_setting(){
         if(!setting_open){
-            if(selected_setting != SETTING_COUNT - 1){
+            if(selected_setting != SETTING_COUNT - 1 && settings[selected_setting].init){
                 setting_open = true;
                 settings::controls::set_controls(false);
                 if(settings[selected_setting].init) settings[selected_setting].init();
@@ -1017,12 +1020,23 @@ namespace settings{
 
 
 void draw_info_page(){
-    char buf[20];
-    snprintf(buf, sizeof(buf), "D-MAG-Firmware: v%s", FIRMWARE_VERSION);
+    char buf[32];
+    
+    snprintf(buf, sizeof(buf), "D-MAG-Firmware");
+    size_t buf_len = strlen(buf);
     gfx::text(buf, 0, status_bar_margin + title_margin, font, base_text_color);
+    snprintf(buf, sizeof(buf), "v%s", FIRMWARE_VERSION);
+    static int32_t prev_scroll_offset1 = 0; static absolute_time_t prev_update1 = nil_time; gfx::scrolling_text(buf, (buf_len + 1) * font_width, status_bar_margin + title_margin, font_width * 5, font, base_text_color, font_width, font_height, prev_scroll_offset1, prev_update1, 100, 1, 2 * font_width);
+    
     gfx::text((char*)"-by Dominik Kultys", 0, status_bar_margin + title_margin + line_margin, font, base_text_color);
     gfx::text((char*)"Sensors: Freq/Volt", 0, status_bar_margin + title_margin + 2 * line_margin, font, base_text_color);
-    gfx::text((char*)"Data Format: IAGA-2002", 0, status_bar_margin + title_margin + 3 * line_margin, font, base_text_color);
+    
+    snprintf(buf, sizeof(buf), "Log Format");
+    buf_len = strlen(buf);
+    gfx::text(buf, 0, status_bar_margin + title_margin + 3 * line_margin, font, base_text_color);
+    snprintf(buf, sizeof(buf), "v%s", FIRMWARE_VERSION);
+    snprintf(buf, sizeof(buf), "%s", logger::DATA_FORMAT == logger::FORMATS::IAGA2002 ? "IAGA2002" : logger::DATA_FORMAT == logger::FORMATS::DMAG2026 ? "DMAG2026" : " Unknown");
+    static int32_t prev_scroll_offset2 = 0; static absolute_time_t prev_update2 = nil_time; gfx::scrolling_text(buf, (buf_len + 1) * font_width, status_bar_margin + title_margin + 3 * line_margin, font_width * 8, font, base_text_color, font_width, font_height, prev_scroll_offset2, prev_update2, 100, 2, 3 * font_width);
 }
 
 void draw_all_page(){
