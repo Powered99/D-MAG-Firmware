@@ -19,11 +19,10 @@ that some of these upcoming features or bugs could take a long time to or never 
 - Log data with accurate date/time on an SD card with an flexible logging system in various formats (IAGA-2002 / DMAG-2026)
 - Display sensor readings / configurations, etc. in the UI
 - Configure multiple settings / factors (like sample count) at runtime.
-
+- Saving and loading settings and calibrations to / from NVM (non-volatile-memory)
 
 # Upcoming features I'm working on:
 - Running measurements on CORE #1 (to avoid overhead from other system components, thus improving precision and speed)
-- Saving settings / sensor calibrations in NVM (Non-volatile-memory, probably flash or SD)
 - Some missing or unfinished settings in the settings page (like at-runtime RTC / median sample count / log elements and formatting configuration)
 - Compatibility with EAS-based DIY sensors over I2C
 - Other features, like display power-saving, further optimizations, etc.
