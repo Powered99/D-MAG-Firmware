@@ -27,6 +27,7 @@
 
 enum class ELEMENTS{
     MAG,
+    MAG_DIFF,
     TEMP
 };
 
@@ -34,6 +35,7 @@ struct element_t{
     ELEMENTS element;
     uint8_t channel;
     char label[9];
+    uint8_t channel2 = 0; // for elements that require a second channel, eg. difference
 };
 
 // IAGA2002 allows for a maximum of 4 elements.
@@ -44,7 +46,7 @@ const uint8_t LOG_ELEMENT_COUNT = 4;
 const element_t LOG_ELEMENTS[LOG_ELEMENT_COUNT] = {
     {ELEMENTS::MAG, 0, "X1"},
     {ELEMENTS::MAG, 1, "X2"},
-    {ELEMENTS::MAG, 2, "X3"},
+    {ELEMENTS::MAG_DIFF, 0, "DX", 1},
     {ELEMENTS::TEMP, 0, "TEMP"}
 };
 
