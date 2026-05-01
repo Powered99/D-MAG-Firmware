@@ -1169,8 +1169,12 @@ namespace logging{
         toggle_held = false;
     }
     void toggle_log(){
-        if(logger::logging_status == logger::LOG_STATUS::LOGGING){ logger::stop_logging(); nvm::save(); }
-        else if(logger::logging_status == logger::LOG_STATUS::IDLE){ logger::start_logging(); nvm::save(); }
+        if(logger::logging_status == logger::LOG_STATUS::IDLE){ 
+            logger::start_logging();
+        }
+        else if(logger::logging_status == logger::LOG_STATUS::LOGGING){
+            logger::stop_logging();
+        }
         gfx::clear();
     }
     void draw(){

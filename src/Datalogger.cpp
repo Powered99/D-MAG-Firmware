@@ -100,12 +100,14 @@ namespace logger{
         }
         //}
         logging_status = (sd_status == fs::SD_STATUS::SD_ERR) ? LOG_STATUS::ERROR : LOG_STATUS::LOGGING;
+        nvm::save();
         return sd_status;
     }
     void stop_logging(){
         fs::close_file();
         if(logging_status == LOG_STATUS::ERROR) return;
         logging_status = LOG_STATUS::IDLE;
+        nvm::save();
         //fs::unmount_sd();
     }
     
