@@ -118,8 +118,7 @@ namespace logger{
     }
     void stop_logging(){
         fs::close_file();
-        if(logging_status == LOG_STATUS::ERROR) return;
-        logging_status = LOG_STATUS::IDLE;
+        if(logging_status != LOG_STATUS::ERROR) logging_status = LOG_STATUS::IDLE;
         nvm::save();
         //fs::unmount_sd();
     }
