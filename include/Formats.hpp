@@ -96,7 +96,7 @@ namespace IAGA2002{
         make_header_comment("Units: X (north+)[nT]"),
         make_header_comment("Accuracy: 1nT"),
         make_header_comment("Magnetometer count: %s", IAGA2002::get_str_magnetometer_count),
-        make_header_comment("D-MAG-Firmware v1.8"),//FIRMWARE_VERSION),
+        make_header_comment("D-MAG-Firmware v" FIRMWARE_VERSION),
         make_header_comment("https://www.github.com/Powered99/D-MAG-Firmware"),
         //make_header_comment("%s", IAGA2002::make_sensor_info),
     };
