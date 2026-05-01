@@ -109,8 +109,11 @@ namespace IAGA2002{
     void make_data_line(char* buf, size_t buf_size, ds3231_datetime_t dt, float* element_values, uint8_t element_count) {
         int doy = math::day_of_year(dt);
 
-        char prefix[32];
-        snprintf(prefix, sizeof(prefix), "%04d-%02d-%02d %02d:%02d:%02d.000 %03d   ", dt.year, dt.month, dt.day, dt.hour, dt.minutes, dt.seconds, doy);
+        char prefix[64];
+        int millis = static_cast<int>((rtc::get_micros() / 1000) % 1000);
+        int doy_int = static_cast<int>(doy);
+        snprintf(prefix, sizeof(prefix), "%04d-%02d-%02d %02d:%02d:%02d.%03d %03d   ",
+             dt.year, dt.month, dt.day, dt.hour, dt.minutes, dt.seconds, millis, doy_int);
 
         char columns[128] = {};
         int pos = 0;
