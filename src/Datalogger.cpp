@@ -54,7 +54,6 @@ namespace logger{
     }
 
 
-    
     // Write single IAGA2002 line
     fs::SD_STATUS iaga_line(ds3231_datetime_t dt) {
         char buf[72];
@@ -78,13 +77,15 @@ namespace logger{
             else if(LOG_ELEMENTS[ch].element == ELEMENTS::TEMP){
                 value = rtc::get_temperature();
             }
-            
+
             sensor_values[ch] = value;
         }
         IAGA2002::make_data_line(buf, sizeof(buf), dt, sensor_values, logged_element_count);
         fs::SD_STATUS status = fs::write_file(buf);    
         return status;
     }
+
+
 
     fs::SD_STATUS start_logging(){
         fs::init_sd();
