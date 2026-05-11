@@ -29,7 +29,7 @@ that some of these upcoming features or bugs could take a long time to or never 
 - Some missing or unfinished settings in the settings page (like at-runtime RTC / median sample count / log elements and formatting configuration)
 - Support for ADS1115 ADCs and EAS-based DIY sensors over I2C
 - SD-card hot-plugging
-- Bugfixes, further optimizations, etc.
+- UI improvements, further bugfixes and optimizations, etc.
 
 # Usage:
 ## Connect components:
