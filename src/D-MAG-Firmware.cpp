@@ -65,10 +65,12 @@ int main()
 
     //set_rtc();
     
+    fgm::launch_polling();
+
     // Main loop
     while (true) {
         ctrl::handle_events();
-        fgm::read_sensors();
+        //fgm::read_sensors(); // Now handled on core1, started in fgm::launch_polling();
         rtc::loop();
         ui::draw_page();
         logger::loop();

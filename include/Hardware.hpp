@@ -45,8 +45,8 @@ namespace fgm{
 
     constexpr uint MAX_SAMPLE_COUNT = 2048; // Max sample count for frequency measurement
 
-    extern uint SET_SAMPLE_COUNT[SENSOR_CH_COUNT]; // Configuration buffer for sample count
-    extern uint SET_MEDIAN_SAMPLE_OFFSET[SENSOR_CH_COUNT]; // Configuration buffer for median sample offset
+    extern volatile uint SET_SAMPLE_COUNT[SENSOR_CH_COUNT]; // Configuration buffer for sample count
+    extern volatile uint SET_MEDIAN_SAMPLE_OFFSET[SENSOR_CH_COUNT]; // Configuration buffer for median sample offset
     
     extern SENSOR_STATE SENSOR_STATES[SENSOR_CH_COUNT];
     
@@ -55,10 +55,11 @@ namespace fgm{
     extern double periods[SENSOR_CH_COUNT]; // delta between sensor output ticks
     extern double frequencies[SENSOR_CH_COUNT]; // sensor output frequencies (in Hz)
     extern float voltages[SENSOR_CH_COUNT]; // sensor output voltages (in V)
-    extern float readings[SENSOR_CH_COUNT]; // Sensor outputs (in nT)
+    extern volatile float readings[SENSOR_CH_COUNT]; // Sensor outputs (in nT)
     
     void init_sensor(size_t ch, SENSOR_MODE mode);
     void init_sensors();
+    void launch_polling();
     void read_sensors();
     void deactivate_sensor(size_t ch);
 
@@ -83,10 +84,6 @@ namespace fgm{
 
     void calculate_nT(uint8_t ch);
     float get_nT(uint8_t ch);
-}
-
-namespace non_volatile_memory{
-
 }
 
 namespace ctrl{

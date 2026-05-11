@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include "pico/stdlib.h"
 
-#define FIRMWARE_VERSION "1.8.7"
+#define FIRMWARE_VERSION "1.9 BETA"
 
 namespace fgm{
     enum class SENSOR_MODE: int8_t {
@@ -31,10 +31,12 @@ namespace fgm{
     };
 
     constexpr uint8_t SENSOR_CH_COUNT = 4; // Edit to change sensor count
+    constexpr uint16_t MIN_IMPULSES_COUNT = 100; // Required impulses per sample - higher numbers can improve precision at the cost of speed.
+    constexpr uint64_t FREQ_TIMEOUT = 50000; // If no impulse after 50ms, set to inactive.
 
-    extern SENSOR_MODE SENSOR_MODES[SENSOR_CH_COUNT];
-    extern uint SAMPLE_COUNT[SENSOR_CH_COUNT]; // Actual used sample count (set with set_sample_count)
-    extern uint MEDIAN_SAMPLE_OFFSET[SENSOR_CH_COUNT]; // Offset of median samples (MEDIAN_SAMPLE_OFFSET <- center -> MEDIAN_SAMPLE_OFFSET), total median samples: 2x offset
+    extern volatile SENSOR_MODE SENSOR_MODES[SENSOR_CH_COUNT];
+    extern volatile uint SAMPLE_COUNT[SENSOR_CH_COUNT]; // Actual used sample count (set with set_sample_count)
+    extern volatile uint MEDIAN_SAMPLE_OFFSET[SENSOR_CH_COUNT]; // Offset of median samples (MEDIAN_SAMPLE_OFFSET <- center -> MEDIAN_SAMPLE_OFFSET), total median samples: 2x offset
     extern CALIB_DATA SENSOR_CALIBRATIONS[SENSOR_CH_COUNT];
     
 }

@@ -48,9 +48,10 @@ bool I2C_INITIALIZED[SENSOR_CH_COUNT]; // 3rd-harmonic based sensor driver (via 
 
 bool adc_initialized = false; // ADC initialized flag
 
-uint SET_SAMPLE_COUNT[SENSOR_CH_COUNT]; // Configured sample count buffer
-uint SET_MEDIAN_SAMPLE_OFFSET[SENSOR_CH_COUNT]; // Configuration buffer for median sample offset
+volatile uint SET_SAMPLE_COUNT[SENSOR_CH_COUNT]; // Configured sample count buffer
+volatile uint SET_MEDIAN_SAMPLE_OFFSET[SENSOR_CH_COUNT]; // Configuration buffer for median sample offset
 absolute_time_t last_pwm_read_timestamp[SENSOR_CH_COUNT];
+absolute_time_t last_pwm_read_timeout[SENSOR_CH_COUNT];
 uint16_t sample_index[SENSOR_CH_COUNT] = {0};
 
 // Raw sensor output data
@@ -59,7 +60,8 @@ double frequencies[SENSOR_CH_COUNT];
 float voltages[SENSOR_CH_COUNT];
 
 // Sensor magnetic output data (in nT)
-float readings[SENSOR_CH_COUNT]; 
+volatile float readings[SENSOR_CH_COUNT];
+static spin_lock_t *readings_lock;
 
 // Initializes the sensor unless it's disabled or already initialized in the same mode.
 void init_sensor(size_t ch, SENSOR_MODE mode){
@@ -84,7 +86,11 @@ void init_sensor(size_t ch, SENSOR_MODE mode){
         pwm_init(slice_num, &config, true);
         pwm_set_counter(slice_num, 0);
 
-        last_pwm_read_timestamp[ch] = get_absolute_time();
+        absolute_time_t now = get_absolute_time();
+
+        last_pwm_read_timestamp[ch] = now;
+        last_pwm_read_timeout[ch] = now;
+
         FREQ_INITIALIZED[ch] = true;
     
     // Fast (onboard ADC) analog driver
@@ -120,6 +126,17 @@ void deactivate_sensor(size_t ch){
     SENSOR_STATES[ch] = SENSOR_STATE::DISABLED;
 }
 
+void polling_thread(){
+    multicore_lockout_victim_init();
+    while(true) read_sensors();
+}
+
+// Starts Core 1 sensor polling thread
+void launch_polling(){
+    readings_lock = spin_lock_init(spin_lock_claim_unused(true));
+    multicore_launch_core1(polling_thread);
+}
+
 // Frequency sensor driver
 void read_sensor_freq(uint8_t ch){
 
@@ -129,19 +146,20 @@ void read_sensor_freq(uint8_t ch){
     uint slice_num = pwm_gpio_to_slice_num(PIN);
     uint16_t count = pwm_get_counter(slice_num); // Read counter
     
-    pwm_set_counter(slice_num, 0); // Reset counter
-    
     absolute_time_t now = get_absolute_time(); // Get now timestamp
 
-    if(count != 0){
+
+    if(count >= MIN_IMPULSES_COUNT){
         uint difference_us = absolute_time_diff_us(last_pwm_read_timestamp[ch], now); // calculate time difference
-        
+        last_pwm_read_timestamp[ch] = now; 
+        last_pwm_read_timeout[ch] = now;
         // Save sample (time delta, count)
         freq_sample sample = {difference_us, count};
         freq_samples[ch][sample_index[ch]++] = sample;
 
         SENSOR_STATES[ch] = SENSOR_STATE::ACTIVE;
 
+        pwm_set_counter(slice_num, 0); // Reset counter
         //float frequency_sample = difference_us > 0 ? (float)count / ((float)difference_us / 1000000.0f) : 0.0f; // calculate frequency sample in Hz
 
         if(sample_index[ch] >= SAMPLE_COUNT[ch]){ // Once we reach the configured sample count
@@ -157,12 +175,11 @@ void read_sensor_freq(uint8_t ch){
             calculate_nT(ch);
             sample_index[ch] = 0;
         }
-    }else{ // No signal from sensor detected / sensor uninitialized
+    }else if(absolute_time_diff_us(last_pwm_read_timeout[ch], now) >= FREQ_TIMEOUT){ // No signal from sensor detected / sensor uninitialized
         SENSOR_STATES[ch] = SENSOR_STATE::INACTIVE;
         sample_index[ch] = 0;
+        
     }
-
-    last_pwm_read_timestamp[ch] = now;  
 }
 
 void read_sensor_adc(uint8_t ch){
@@ -218,11 +235,17 @@ void calculate_nT(uint8_t ch){
     double result_tesla = (B_measured - ch_data.offset) * ch_data.slope;
 
     double result_nT = result_tesla * 1e9f; // Result in nT
+    //readings[ch] = result_nT;
+    uint32_t save = spin_lock_blocking(readings_lock);
     readings[ch] = result_nT;
+    spin_unlock(readings_lock, save);
 }
 
 float get_nT(uint8_t ch){
-    return readings[ch];
+    uint32_t save = spin_lock_blocking(readings_lock);
+    float result_nT = readings[ch];
+    spin_unlock(readings_lock, save);
+    return result_nT;
 }
 
 // Target sensor(s) have to be initialized after!
@@ -573,10 +596,10 @@ static Block pack() {
     b.logging_status  = static_cast<uint8_t>(logger::logging_status);
 
     for (uint8_t i = 0; i < fgm::SENSOR_CH_COUNT; ++i) {
-            b.calibrations[i] = { fgm::SENSOR_CALIBRATIONS[i].offset,
-                                fgm::SENSOR_CALIBRATIONS[i].slope,
-                                fgm::SENSOR_CALIBRATIONS[i].MIN,
-                                fgm::SENSOR_CALIBRATIONS[i].MAX };
+        b.calibrations[i] = { fgm::SENSOR_CALIBRATIONS[i].offset,
+                            fgm::SENSOR_CALIBRATIONS[i].slope,
+                            fgm::SENSOR_CALIBRATIONS[i].MIN,
+                            fgm::SENSOR_CALIBRATIONS[i].MAX };
         b.sensor_modes[i]          = static_cast<int8_t>(fgm::SENSOR_MODES[i]);
         b.sample_counts[i]         = fgm::SAMPLE_COUNT[i];
         b.median_sample_offsets[i] = fgm::MEDIAN_SAMPLE_OFFSET[i];
@@ -630,12 +653,16 @@ void save() {
     uint8_t page[FLASH_PAGE_SIZE] = {};
     memcpy(page, &b, sizeof(Block));
 
+    multicore_lockout_start_blocking();
+
     uint32_t irq = save_and_disable_interrupts();
     flash_range_erase(FLASH_OFFSET, FLASH_SECTOR_SIZE);
     flash_range_program(FLASH_OFFSET, page, FLASH_PAGE_SIZE);
     restore_interrupts(irq);
     
     const uint8_t* raw = reinterpret_cast<const uint8_t*>(XIP_BASE + FLASH_OFFSET);
+
+    multicore_lockout_end_blocking();
 }
 
 void load_defaults(){
