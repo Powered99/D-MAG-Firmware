@@ -127,7 +127,7 @@ namespace IAGA2002{
         std::string data = std::string(prefix) + columns;
         snprintf(buf, buf_size, "%-70s\n", data.c_str());
     }
-    // WIP
+    
     std::string get_sensor_samples(){
         char buf[format_line_width];
         int offset = 0;
