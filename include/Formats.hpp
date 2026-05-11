@@ -72,15 +72,14 @@ namespace IAGA2002{
 
     std::string get_reported();
     std::string get_str_magnetometer_count();
-
-    //std::string make_sensor_info();
+    std::string get_sensor_samples();
 
     void make_header_line(char* buf, size_t buf_size, header_line_t line);
     void make_column_line(char* buf, size_t buf_size);
     void make_data_line(char* buf, size_t buf_size, ds3231_datetime_t dt, float* sensor_values, uint8_t sensor_count);
 
     const uint8_t HEADER_ENTRY_COUNT = 10;
-    const uint8_t COMMENT_ENTRY_COUNT = 5;
+    const uint8_t COMMENT_ENTRY_COUNT = 6;
 
     static header_line_t HEADER[HEADER_ENTRY_COUNT] = {
         make_header_entry("Format", "IAGA-2002"),
@@ -98,8 +97,8 @@ namespace IAGA2002{
         make_header_comment("Units: X (north+)[nT]"),
         make_header_comment("Accuracy: 1nT"),
         make_header_comment("Magnetometer count: %s", IAGA2002::get_str_magnetometer_count),
+        make_header_comment("%s", IAGA2002::get_sensor_samples),
         make_header_comment("D-MAG-Firmware v" FIRMWARE_VERSION),
         make_header_comment("https://www.github.com/Powered99/D-MAG-Firmware"),
-        //make_header_comment("%s", IAGA2002::make_sensor_info),
     };
 }

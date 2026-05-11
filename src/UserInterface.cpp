@@ -1035,7 +1035,7 @@ void draw_info_page(){
     size_t buf_len = strlen(buf);
     gfx::text(buf, 0, status_bar_margin + title_margin, font, base_text_color);
     snprintf(buf, sizeof(buf), "v%s", FIRMWARE_VERSION);
-    static int32_t prev_scroll_offset1 = 0; static absolute_time_t prev_update1 = nil_time; gfx::scrolling_text(buf, (buf_len + 1) * font_width, status_bar_margin + title_margin, font_width * 4, font, base_text_color, font_width, font_height, prev_scroll_offset1, prev_update1, 100, 1, 2 * font_width);
+    static int32_t prev_scroll_offset1 = 0; static absolute_time_t prev_update1 = nil_time; gfx::scrolling_text(buf, (buf_len + 1) * font_width, status_bar_margin + title_margin, font_width * 4, font, base_text_color, font_width, font_height, prev_scroll_offset1, prev_update1, 100, 2, 2 * font_width);
     
     gfx::text((char*)"-by Dominik Kultys", 0, status_bar_margin + title_margin + line_margin, font, base_text_color);
     gfx::text((char*)"Sensors: Freq/Volt", 0, status_bar_margin + title_margin + 2 * line_margin, font, base_text_color);

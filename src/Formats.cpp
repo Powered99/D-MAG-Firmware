@@ -109,8 +109,11 @@ namespace IAGA2002{
     void make_data_line(char* buf, size_t buf_size, ds3231_datetime_t dt, float* element_values, uint8_t element_count) {
         int doy = math::day_of_year(dt);
 
-        char prefix[32];
-        snprintf(prefix, sizeof(prefix), "%04d-%02d-%02d %02d:%02d:%02d.000 %03d   ", dt.year, dt.month, dt.day, dt.hour, dt.minutes, dt.seconds, doy);
+        char prefix[64];
+        int millis = static_cast<int>((rtc::get_micros() / 1000) % 1000);
+        int doy_int = static_cast<int>(doy);
+        snprintf(prefix, sizeof(prefix), "%04d-%02d-%02d %02d:%02d:%02d.%03d %03d   ",
+             dt.year, dt.month, dt.day, dt.hour, dt.minutes, dt.seconds, millis, doy_int);
 
         char columns[128] = {};
         int pos = 0;
@@ -124,15 +127,17 @@ namespace IAGA2002{
         std::string data = std::string(prefix) + columns;
         snprintf(buf, buf_size, "%-70s\n", data.c_str());
     }
-    // WIP
-    /*std::string make_sensor_info(){
-        char buf[get_active_sensor_count() * (format_line_width + 1)];
+    
+    std::string get_sensor_samples(){
+        char buf[format_line_width];
         int offset = 0;
+        offset += snprintf(buf + offset, sizeof(buf) - offset, "Samples: ");
+
         for (uint8_t i = 0; i < LOG_ELEMENT_COUNT; i++) {
-            if (fgm::SENSOR_MODES[LOG_ELEMENTS[i].channel] == fgm::SENSOR_MODE::DISABLED) continue;
+            if (LOG_ELEMENTS[i].element != ELEMENTS::MAG || fgm::SENSOR_MODES[LOG_ELEMENTS[i].channel] == fgm::SENSOR_MODE::DISABLED) continue;
             std::string state_str = (fgm::SENSOR_STATES[LOG_ELEMENTS[i].channel] == fgm::SENSOR_STATE::INACTIVE) ? "inactive" : "active";
-            offset += snprintf(buf + offset, sizeof(buf) - offset, " # Sensor X%s: Fluxgate, parallel X-axis orientation, %s Samples%s", std::to_string(LOG_ELEMENTS[i].channel + 1).c_str(), std::to_string(fgm::SAMPLE_COUNT[LOG_ELEMENTS[i].channel]).c_str(), LOG_ELEMENTS[i].channel == fgm::SENSOR_CH_COUNT - 1 ? "" : "\n");
+            offset += snprintf(buf + offset, sizeof(buf) - offset, "%sX%s: %s", i == 0 ? "" : ", ", std::to_string(LOG_ELEMENTS[i].channel + 1).c_str(), std::to_string(fgm::SAMPLE_COUNT[LOG_ELEMENTS[i].channel]).c_str());
         }
         return std::string(buf);
-    }*/
+    }
 }
