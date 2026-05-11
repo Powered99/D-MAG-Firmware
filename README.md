@@ -1,7 +1,10 @@
-## THIS IS THE DEV BRANCH! The project will likely not compile and can be buggy or even crash! Please check the stable branch for usage!
+## THIS IS THE DEV BRANCH! The project can be buggy, crash or even not compile! Please check the stable branch for usage!
 
 # D-MAG-Firmware
-A vastly configurable Flux-Gate-Magnetometer firmware for the Raspberry Pi Pico (RP2040) used to read from up to 4 FGM3+ fluxgate magnetometers (via PWM or ADC).
+A vastly configurable and very flexible geomagnetic observatory firmware for the Raspberry Pi Pico (RP2040) microcontroller.
+Currently supports a variety of sensors that output an analog signal or square wave (eg. FGM3-Plus/Pro).
+It reads, processes, displays and logs data, lets you configure settings / calibrations at runtime using an intuitive and powerful UI and more.
+**Version: v1.9 BETA**
 
 The D-MAG-Firmware is still **in early development**. Therefore, using it can still be buggy and incomplete.
 
@@ -11,20 +14,20 @@ that some of these upcoming features or bugs could take a long time to or never 
 **Feel free to use and modify it however!** - If you do, please **credit me** in your project if you're publishing it / it's documentation.
 
 # Features:
-- Read from 4 or more PWM FGM3+ sensors, via PWM or ADCs
-- Keep track of time and read temperature with RTC
-- (Auto-detect sensors on non-disabled channels)
-- Take up to 2048 sensor samples and filter them using an averaged median array (up to 128 filtered samples)
-- Log data with accurate date/time on an SD card with a flexible logging system in various formats (IAGA-2002 / DMAG-2026)
-- Display sensor readings / settings, etc. in the UI
+- Reads from 4 or more PWM FGM3+ sensors, via PWM or ADCs (Auto-detect sensors on non-disabled channels)
+- Utilizes both CPU-Cores to drastically improve performance
+- Takes up to 2048 sensor samples and filters them using an averaged median array (up to 128 filtered samples)
+- Keeps track of time and reads temperature using RTC
+- Logs data with accurate date/time on an SD card with a flexible logging system in various formats (IAGA-2002 / DMAG-2026)
+- Displays sensor readings / settings, etc. in the UI
 - Sensor calibrations and configurable settings at runtime
 - Saving and loading settings and calibrations to / from NVM (non-volatile-memory)
-- Autonomous logger recovery from crashes / power outages using NVM
+- Autonomous logger recovery from crashes / power outages using NVM flag
 
 # Upcoming features I'm working on / planning:
-- Running measurements on CORE #1 (to avoid overhead from other system components, thus improving precision and speed)
+- Tweaking system sensor configurations for optimal precision and performance.
 - Some missing or unfinished settings in the settings page (like at-runtime RTC / median sample count / log elements and formatting configuration)
-- Compatibility with EAS-based DIY sensors over I2C
+- Support for ADS1115 and EAS-based DIY sensors over I2C
 - SD-card hot-plugging
 - Other features, like display power-saving, further optimizations, etc.
 
