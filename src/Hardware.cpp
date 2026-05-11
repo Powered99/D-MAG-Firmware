@@ -677,3 +677,23 @@ void load_defaults(){
 }
 
 }
+
+// Override FatFs timestamp function with DS3231 RTC data
+extern "C" DWORD get_fattime(void) {
+    ds3231_datetime_t dt;
+    rtc::get_datetime(&dt);
+
+    // Pack into FatFs DWORD format:
+    // bits 31:25 — year since 1980 (0..127)
+    // bits 24:21 — month (1..12)
+    // bits 20:16 — day (1..31)
+    // bits 15:11 — hour (0..23)
+    // bits 10:5  — minute (0..59)
+    // bits 4:0   — second / 2 (0..29)
+    return ((DWORD)(dt.year - 1980) << 25)
+         | ((DWORD)(dt.month)       << 21)
+         | ((DWORD)(dt.day)         << 16)
+         | ((DWORD)(dt.hour)        << 11)
+         | ((DWORD)(dt.minutes)     <<  5)
+         | ((DWORD)(dt.seconds / 2));
+}

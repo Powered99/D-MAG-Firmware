@@ -23,12 +23,12 @@
 // Make sure to then re-comment the call and flash again to prevent the rtc being reset to this time on each boot!
 void set_rtc(){
     ds3231_datetime_t dt = {
-        .hour = 1,
-        .minutes = 25,
-        .seconds = 50,
-        .day = 16,
+        .hour = 21,
+        .minutes = 22,
+        .seconds = 40,
+        .day = 11,
         .dotw = 1,
-        .month = 3,
+        .month = 5,
         .year = 2026,
     };
     rtc::set_datetime(&dt);

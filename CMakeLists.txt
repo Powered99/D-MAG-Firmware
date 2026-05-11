@@ -95,5 +95,12 @@ target_link_libraries(D-MAG-Firmware
         pico-ds3231
         )
         
+
+# Remove the FatFS library's rtc.c from compilation, since we're overriding with our own RTC function.
+set_source_files_properties(
+    lib/fatfs/no-OS-FatFS-SD-SPI-RPi-Pico/FatFs_SPI/src/rtc.c
+    PROPERTIES HEADER_FILE_ONLY TRUE
+)
+
 pico_add_extra_outputs(D-MAG-Firmware)
 
