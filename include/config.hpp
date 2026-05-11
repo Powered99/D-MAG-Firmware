@@ -31,8 +31,9 @@ namespace fgm{
     };
 
     constexpr uint8_t SENSOR_CH_COUNT = 4; // Edit to change sensor count
-    constexpr uint16_t MIN_IMPULSES_COUNT = 100; // Required impulses per sample - higher numbers can improve precision at the cost of speed.
+    constexpr uint16_t MIN_IMPULSES_COUNT = 200; // Required impulses per sample - higher numbers can improve precision at the cost of speed.
     constexpr uint64_t FREQ_TIMEOUT = 50000; // If no impulse after 50ms, set to inactive.
+    constexpr uint8_t MEDIAN_OFFSET_SAMPLE_DIVIDEND = 8;
 
     extern volatile SENSOR_MODE SENSOR_MODES[SENSOR_CH_COUNT];
     extern volatile uint SAMPLE_COUNT[SENSOR_CH_COUNT]; // Actual used sample count (set with set_sample_count)
