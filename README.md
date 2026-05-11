@@ -67,6 +67,8 @@ You can still use previous revisions of the device but you'll have to change the
 | SELECT | 4   |
 | RIGHT  | 6   |
 
+*NOTE: The buttons should pull the GPIO pin down when pressed.*
+
 ### Frequency Sensors
 | Sensor | GPIO |
 |--------|------|
@@ -74,6 +76,8 @@ You can still use previous revisions of the device but you'll have to change the
 | CH1    | 7    |
 | CH2    | 5    |
 | CH3    | 3    |
+
+***WARNING****: Make sure the RP2040 doesn't receive more than 3.3V at it's input! If your sensors output more, eg. 5V, use a level shifter to prevent damage.*
 
 ### Analog Sensors
 | Sensor | GPIO |
@@ -83,6 +87,7 @@ You can still use previous revisions of the device but you'll have to change the
 | CH2    | 26   |
 | CH3    |  *Unavailable on official PICO*   |
 
+***WARNING****: Make sure the RP2040 ADCs don't receive more than 3.3V at their inputs! If your sensors output more, use a voltage divider to prevent damage.*
 
 ## Compile & Upload code
 Use VSCode with the Raspberry Pi Pico extension to compile and flash the code or copy the build/D-MAG-Firmware.uf2 file onto the Pico in BOOTSEL mode.
