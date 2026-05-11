@@ -27,9 +27,9 @@ that some of these upcoming features or bugs could take a long time to or never 
 # Upcoming features I'm working on / planning:
 - Tweaking system sensor configurations for optimal precision and performance.
 - Some missing or unfinished settings in the settings page (like at-runtime RTC / median sample count / log elements and formatting configuration)
-- Support for ADS1115 and EAS-based DIY sensors over I2C
+- Support for ADS1115 ADCs and EAS-based DIY sensors over I2C
 - SD-card hot-plugging
-- Other features, like display power-saving, further optimizations, etc.
+- Bugfixes, further optimizations, etc.
 
 # Usage:
 ## Connect components:
@@ -45,9 +45,6 @@ You can still use previous revisions of the device but you'll have to change the
 | CS     | 13   |
 | RST    | 14   |
 | DC     | 15   |
-| BL*    | 8    | 
-
-*(BL: Backlight pin, might not be present on some TFT modules. Display powersaving W.I.P.)*
 
 ### SD Card (SPI0)
 | Signal | GPIO |
