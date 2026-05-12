@@ -59,8 +59,9 @@ double periods[SENSOR_CH_COUNT];
 double frequencies[SENSOR_CH_COUNT];
 float voltages[SENSOR_CH_COUNT];
 
-// Sensor magnetic output data (in nT)
-volatile float readings[SENSOR_CH_COUNT];
+
+float readings_local[SENSOR_CH_COUNT]; // Local sensor magnetic output data (in nT) on Core1
+volatile float readings[SENSOR_CH_COUNT]; // synced sensor magnetic output data (in nT)
 static spin_lock_t *readings_lock;
 
 // Initializes the sensor unless it's disabled or already initialized in the same mode.
@@ -200,13 +201,20 @@ void read_sensor_adc(uint8_t ch){
 
 // Get sensor frequencies
 void read_sensors(){
-    for (int ch = 0; ch < SENSOR_CH_COUNT; ch++){
+    for (uint8_t ch = 0; ch < SENSOR_CH_COUNT; ch++){
         if (SENSOR_STATES[ch] == SENSOR_STATE::DISABLED) continue; // Dont read from disabled sensors
         
         if (SENSOR_MODES[ch] == SENSOR_MODE::FREQ && FREQ_INITIALIZED[ch]) read_sensor_freq(ch); // Frequency driver   
         else if (SENSOR_MODES[ch] == SENSOR_MODE::ANALOG && ANALOG_INITIALIZED[ch]) read_sensor_adc(ch); // Analog driver
         else if (SENSOR_MODES[ch] == SENSOR_MODE::HARMONIC && I2C_INITIALIZED[ch]) continue; // TODO: 3rd harmonic driver W.I.P. (via I2C)
     }
+
+    // Sync to shared buffer
+    uint32_t save = spin_lock_blocking(readings_lock);
+    for(uint8_t ch = 0; ch < SENSOR_CH_COUNT; ch++){
+        readings[ch] = readings_local[ch];
+    }
+    spin_unlock(readings_lock, save);
     
 }
 
@@ -235,16 +243,16 @@ void calculate_nT(uint8_t ch){
     double result_tesla = (B_measured - ch_data.offset) * ch_data.slope;
 
     double result_nT = result_tesla * 1e9f; // Result in nT
-    //readings[ch] = result_nT;
-    uint32_t save = spin_lock_blocking(readings_lock);
-    readings[ch] = result_nT;
-    spin_unlock(readings_lock, save);
+    readings_local[ch] = result_nT;
 }
 
+// Get given channel's current reading in nT
 float get_nT(uint8_t ch){
+    // Sync from Core1
     uint32_t save = spin_lock_blocking(readings_lock);
     float result_nT = readings[ch];
     spin_unlock(readings_lock, save);
+    // Return value
     return result_nT;
 }
 
