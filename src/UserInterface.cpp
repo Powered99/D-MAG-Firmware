@@ -33,6 +33,7 @@ uint16_t negative_text_color = disp::display.C_RED;
 uint16_t inactive_text_color = disp::display.C_DGREEN;
 uint16_t setting_text_color = disp::display.C_MAROON;
 uint16_t setting_selected_text_color = disp::display.C_MAGENTA;
+uint16_t editing_text_color = disp::display.C_LBLUE;
 
 display_Font_name_e font = font_pico;
 uint8_t font_width = 8;
@@ -96,7 +97,24 @@ namespace settings{
         };
     };
     namespace rtc_conf{
-        void draw_conf();
+        namespace controls{
+            void add_controls();
+            void remove_controls();
+        }
+        void init();
+        void enter_edit_dt();
+        void exit_edit_dt();
+        void exit();
+        void submit();
+        void set_selected_option(uint8_t option);
+        void next_option();
+        void prev_option();
+        void increase_option();
+        void decrease_option();
+        void select_option();
+        void speed_up();
+        void reset_speed();
+        void draw();
     };
     namespace log{
         namespace interval{
@@ -231,7 +249,7 @@ namespace settings{
 
 
     struct option settings[SETTING_COUNT] = {
-        {.text="RTC - Set date/time", .exec=rtc_conf::draw_conf},
+        {.text="RTC - Set date/time", .exec=rtc_conf::draw, .init=rtc_conf::init},
         {.text="FGM - Set modes", .exec=fgm_conf::modes::draw, .init=fgm_conf::modes::init},
         {.text="FGM - Calibrate", .exec=fgm_conf::calib::draw, .init=fgm_conf::calib::init},
         {.text="FGM - Sampling", .exec=fgm_conf::sampling::draw, .init=fgm_conf::sampling::init},
@@ -244,8 +262,234 @@ namespace settings{
     // Setting option pages
 
     namespace rtc_conf{
-        void draw_conf(){
-            exit_settings();
+        uint8_t selected_option = 0;
+        uint8_t option_count = 9; // hours, minutes, seconds, year, month, day, dow (day of week), submit, cancel
+        ds3231_datetime_t dt;
+        bool editing_dt = false;
+        int change_amount = 1;
+
+        namespace controls{
+            size_t ctrl_next_id;
+            size_t ctrl_prev_id;
+            size_t ctrl_select_id;
+            // Sample count setting
+            size_t ctrl_increase_id;
+            size_t ctrl_decrease_id;
+            // Sample count setting speed change when held
+            size_t ctrl_held_increase_id;
+            size_t ctrl_held_decrease_id;
+
+            size_t ctrl_increase_hold_id;
+            size_t ctrl_decrease_hold_id;
+            // Reset speed when button released
+            size_t ctrl_increase_release_id;
+            size_t ctrl_decrease_release_id;
+
+            void add_controls(){
+                ctrl_next_id = ctrl::connect(ctrl::BUTTON_t::BTN_RIGHT, ctrl::BTN_EVENT_t::BTN_PRESSED, next_option);
+                ctrl_prev_id = ctrl::connect(ctrl::BUTTON_t::BTN_LEFT, ctrl::BTN_EVENT_t::BTN_PRESSED, prev_option);
+                ctrl_select_id = ctrl::connect(ctrl::BUTTON_t::BTN_SELECT, ctrl::BTN_EVENT_t::BTN_PRESSED, select_option);
+
+                ctrl_increase_id = ctrl::connect(ctrl::BUTTON_t::BTN_RIGHT, ctrl::BTN_EVENT_t::BTN_PRESSED, increase_option);
+                ctrl_decrease_id = ctrl::connect(ctrl::BUTTON_t::BTN_LEFT, ctrl::BTN_EVENT_t::BTN_PRESSED, decrease_option);
+
+                ctrl_held_increase_id = ctrl::connect(ctrl::BUTTON_t::BTN_RIGHT, ctrl::BTN_EVENT_t::BTN_DOWN, increase_option);
+                ctrl_held_decrease_id = ctrl::connect(ctrl::BUTTON_t::BTN_LEFT, ctrl::BTN_EVENT_t::BTN_DOWN, decrease_option);
+
+                ctrl_increase_hold_id = ctrl::connect(ctrl::BUTTON_t::BTN_RIGHT, ctrl::BTN_EVENT_t::BTN_HOLD, speed_up);
+                ctrl_decrease_hold_id = ctrl::connect(ctrl::BUTTON_t::BTN_LEFT, ctrl::BTN_EVENT_t::BTN_HOLD, speed_up);
+
+                ctrl_increase_release_id = ctrl::connect(ctrl::BUTTON_t::BTN_RIGHT, ctrl::BTN_EVENT_t::BTN_RELEASED, reset_speed);
+                ctrl_decrease_release_id = ctrl::connect(ctrl::BUTTON_t::BTN_LEFT, ctrl::BTN_EVENT_t::BTN_RELEASED, reset_speed);
+
+                ctrl::set_enabled(ctrl_increase_id, false);
+                ctrl::set_enabled(ctrl_decrease_id, false);
+                
+                ctrl::set_enabled(ctrl_increase_hold_id, false);
+                ctrl::set_enabled(ctrl_decrease_hold_id, false);
+                ctrl::set_enabled(ctrl_held_increase_id, false);
+                ctrl::set_enabled(ctrl_held_decrease_id, false);
+                ctrl::set_enabled(ctrl_increase_release_id, false);
+                ctrl::set_enabled(ctrl_decrease_release_id, false);
+            }
+            void remove_controls(){
+                ctrl::disconnect(ctrl_next_id);
+                ctrl::disconnect(ctrl_prev_id);
+                ctrl::disconnect(ctrl_select_id);
+
+                ctrl::disconnect(ctrl_increase_id);
+                ctrl::disconnect(ctrl_decrease_id);
+
+                ctrl::disconnect(ctrl_increase_hold_id);
+                ctrl::disconnect(ctrl_decrease_hold_id);
+                ctrl::disconnect(ctrl_held_increase_id);
+                ctrl::disconnect(ctrl_held_decrease_id);
+                ctrl::disconnect(ctrl_increase_release_id);
+                ctrl::disconnect(ctrl_decrease_release_id);
+            }
+        }
+        
+
+        void init(){
+            settings::rtc_conf::controls::add_controls();
+            rtc::get_datetime(&dt);
+            selected_option = 0;
+        }
+      
+        void enter_edit_dt(){
+            ctrl::set_enabled(rtc_conf::controls::ctrl_next_id, false);
+            ctrl::set_enabled(rtc_conf::controls::ctrl_prev_id, false);
+
+            ctrl::set_enabled(rtc_conf::controls::ctrl_increase_id, true);
+            ctrl::set_enabled(rtc_conf::controls::ctrl_decrease_id, true);
+            ctrl::set_enabled(rtc_conf::controls::ctrl_increase_hold_id, true);
+            ctrl::set_enabled(rtc_conf::controls::ctrl_decrease_hold_id, true);
+
+            editing_dt = true;
+        }
+
+        void exit_edit_dt(){
+            ctrl::set_enabled(rtc_conf::controls::ctrl_next_id, true);
+            ctrl::set_enabled(rtc_conf::controls::ctrl_prev_id, true);
+
+            ctrl::set_enabled(rtc_conf::controls::ctrl_increase_id, false);
+            ctrl::set_enabled(rtc_conf::controls::ctrl_decrease_id, false);
+            ctrl::set_enabled(rtc_conf::controls::ctrl_increase_hold_id, false);
+            ctrl::set_enabled(rtc_conf::controls::ctrl_decrease_hold_id, false);
+
+            editing_dt = false;
+        }
+
+        void exit(){
+            settings::rtc_conf::controls::remove_controls();
+            selected_option = 0;
+            exit_setting();
+        }
+
+        void submit(){
+            rtc::set_datetime(&dt);
+            exit();
+        }
+
+        void set_selected_option(uint8_t option){
+            selected_option = option;
+        }
+        void next_option(){
+            set_selected_option((selected_option + 1) % option_count);
+        }
+        void prev_option(){
+            set_selected_option((selected_option + option_count - 1) % option_count);
+        }
+
+        void increase_option(){
+            // hours, minutes, seconds, year, month, day, dow (day of week), ...
+            switch(selected_option){
+                case 0: dt.hour    = (dt.hour    + change_amount + 24) % 24;                    break;
+                case 1: dt.minutes = (dt.minutes + change_amount + 60) % 60;                    break;
+                case 2: dt.seconds = (dt.seconds + change_amount + 60) % 60;                    break;
+                case 3: dt.year    =  ((dt.year - 2000 + change_amount + 100) % 100) + 2000;    break;
+                case 4: dt.month   = ((dt.month - 1 + change_amount + 12) % 12) + 1;            break;
+                case 5: dt.day     = ((dt.day   - 1 + change_amount + 31) % 31) + 1;            break;
+                case 6: dt.dotw    = ((dt.dotw  - 1 + change_amount + 7 ) % 7 ) + 1;            break;
+            }
+        }
+        void decrease_option(){
+            // hours, minutes, seconds, year, month, day, dow (day of week), ...
+            switch(selected_option){
+                case 0: dt.hour    = (dt.hour    + 24   - change_amount) % 24;                  break;
+                case 1: dt.minutes = (dt.minutes + 60   - change_amount) % 60;                  break;
+                case 2: dt.seconds = (dt.seconds + 60   - change_amount) % 60;                  break;
+                case 3: dt.year    = ((dt.year - 2000 - change_amount + 100) % 100) + 2000;     break;
+                case 4: dt.month   = ((dt.month - 1 + 12 - change_amount) % 12) + 1;            break;
+                case 5: dt.day     = ((dt.day   - 1 + 31 - change_amount) % 31) + 1;            break;
+                case 6: dt.dotw    = ((dt.dotw  - 1 + 7  - change_amount) % 7 ) + 1;            break;
+            }
+        }
+
+        void select_option(){
+            if(editing_dt){
+                exit_edit_dt();
+            }else{
+                if(selected_option == option_count - 2) submit();
+                else if(selected_option == option_count - 1) exit();
+                else enter_edit_dt();
+            }
+        }
+
+        void speed_up(){
+            // hours, minutes, seconds, year, month, day, dow (day of week)
+            static const uint8_t faster_change_amounts[7] = {2, 5, 5, 10, 2, 5, 2};
+            if(selected_option < 7) change_amount = faster_change_amounts[selected_option];
+
+            ctrl::set_enabled(rtc_conf::controls::ctrl_increase_id, false);
+            ctrl::set_enabled(rtc_conf::controls::ctrl_decrease_id, false);
+            ctrl::set_enabled(rtc_conf::controls::ctrl_select_id, false);
+
+            ctrl::set_enabled(rtc_conf::controls::ctrl_held_increase_id, true);
+            ctrl::set_enabled(rtc_conf::controls::ctrl_held_decrease_id, true);
+            ctrl::set_enabled(rtc_conf::controls::ctrl_increase_release_id, true);
+            ctrl::set_enabled(rtc_conf::controls::ctrl_decrease_release_id, true);
+        }
+        void reset_speed(){
+            change_amount = 1;
+            ctrl::set_enabled(rtc_conf::controls::ctrl_increase_id, true);
+            ctrl::set_enabled(rtc_conf::controls::ctrl_decrease_id, true);
+            ctrl::set_enabled(rtc_conf::controls::ctrl_select_id, true);
+
+            ctrl::set_enabled(rtc_conf::controls::ctrl_held_increase_id, false);
+            ctrl::set_enabled(rtc_conf::controls::ctrl_held_decrease_id, false);
+            ctrl::set_enabled(rtc_conf::controls::ctrl_increase_release_id, false);
+            ctrl::set_enabled(rtc_conf::controls::ctrl_decrease_release_id, false);
+        }
+
+        // Returns next x character position.
+        uint8_t draw_time_value(char* buf, uint8_t x, uint8_t y, uint8_t value_index){
+            uint16_t color = selected_option == value_index ? (editing_dt ? editing_text_color : setting_selected_text_color) : positive_text_color;
+            size_t buf_len = strlen(buf);
+            gfx::text(buf, x, y, font, color);
+            return x + buf_len * font_width;
+        }
+
+        void draw(){
+            char buf[20];
+            uint8_t y = status_bar_margin + title_margin;
+            uint8_t x = 0;
+
+            // Hour, minutes, seconds
+            snprintf(buf, sizeof(buf), "%02d:", dt.hour);
+            x = draw_time_value(buf, x, y, 0);
+            snprintf(buf, sizeof(buf), "%02d:", dt.minutes);
+            x = draw_time_value(buf, x, y, 1);
+            snprintf(buf, sizeof(buf), "%02d", dt.seconds);
+            draw_time_value(buf, x, y, 2);
+            x = 0; y += line_margin;
+
+            // Year, month, day
+            snprintf(buf, sizeof(buf), "%04d-", dt.year);
+            x = draw_time_value(buf, x, y, 3);
+            snprintf(buf, sizeof(buf), "%02d-", dt.month);
+            x = draw_time_value(buf, x, y, 4);
+            snprintf(buf, sizeof(buf), "%02d", dt.day);
+            draw_time_value(buf, x, y, 5);
+            x = 0; y += line_margin;
+
+            // Day of the week
+            static const char* day_names[7] = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
+            static size_t prev_dotw_len = 0;
+            snprintf(buf, sizeof(buf), "%s", day_names[dt.dotw - 1]);
+            uint16_t color = selected_option == 6 ? (editing_dt ? editing_text_color : setting_selected_text_color) : positive_text_color;
+            prev_dotw_len = gfx::smart_text(buf, x, y, font, color, prev_dotw_len, font_width, font_height);
+            y += line_margin;
+
+            // Submit / Cancel
+
+            y = status_bar_margin + subtitle_margin + line_margin * 6;
+            color = selected_option == option_count - 2 ? setting_selected_text_color : setting_text_color;
+            gfx::text((char*)"Submit", 0, y, font, color);
+            
+            y += line_margin;
+            color = selected_option == option_count - 1 ? setting_selected_text_color : setting_text_color;
+            gfx::text((char*)"Cancel", 0, y, font, color);
         }
     };
     
@@ -654,15 +898,14 @@ namespace settings{
             }
             void decrease_sample_count(){
                 sample_count[selected_option] -= change_amount;
-                if(sample_count[selected_option] <= 0) sample_count[selected_option] = 1; // TODO: Temporarily 4 to avoid median problems
-            }  
+                if(sample_count[selected_option] <= 0) sample_count[selected_option] = 1;
+            } 
             void enter_edit_sample_count(){
                 ctrl::set_enabled(sampling::controls::ctrl_next_id, false);
                 ctrl::set_enabled(sampling::controls::ctrl_prev_id, false);
 
                 ctrl::set_enabled(sampling::controls::ctrl_increase_id, true);
                 ctrl::set_enabled(sampling::controls::ctrl_decrease_id, true);
-
                 ctrl::set_enabled(sampling::controls::ctrl_increase_hold_id, true);
                 ctrl::set_enabled(sampling::controls::ctrl_decrease_hold_id, true);
 
@@ -706,12 +949,12 @@ namespace settings{
                     else if(selected_option == option_count - 1) exit();
                     else enter_edit_sample_count();
                 }
-            };
+            }
             void draw(){ // TODO: Implement median configuration
                 char buf[20];
                 uint16_t color;
                 static uint8_t prev_sample_count_len[fgm::SENSOR_CH_COUNT];
-                int y =  status_bar_margin + title_margin;
+                uint8_t y = status_bar_margin + title_margin;
 
                 gfx::text((char*)" CH  SAMPLE MEDIAN", 0, y, font, subtitle_text_color);
                 y += line_margin;
@@ -723,7 +966,7 @@ namespace settings{
                     
                     uint16_t color;
                     if(selected_option == ch){
-                        if(editing_sample_count) color = disp::display.C_LBLUE;
+                        if(editing_sample_count) color = editing_text_color;
                         else color = setting_selected_text_color;
                     }else color = fgm::SENSOR_STATES[ch] == fgm::SENSOR_STATE::ACTIVE ? positive_text_color : fgm::SENSOR_STATES[ch] == fgm::SENSOR_STATE::INACTIVE ? inactive_text_color : negative_text_color;
 
@@ -913,7 +1156,7 @@ namespace settings{
 
                 uint16_t color;
                 if(selected_option == 0){
-                    if(editing_interval) color = disp::display.C_LBLUE;
+                    if(editing_interval) color = editing_text_color;
                     else color = setting_selected_text_color;
                 }else color = positive_text_color;
 

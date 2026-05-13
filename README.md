@@ -20,13 +20,13 @@ that some of these upcoming features or bugs could take a long time to or never 
 - Keeps track of time and reads temperature using RTC
 - Logs data with accurate date/time on an SD card with a flexible logging system in various formats (IAGA-2002 / DMAG-2026)
 - Displays sensor readings / settings, etc. in the UI
-- Sensor calibrations and configurable settings at runtime
+- Sensor calibrations, setting the RTC and configurable settings at runtime
 - Saving and loading settings and calibrations to / from NVM (non-volatile-memory)
 - Autonomous logger recovery from crashes / power outages using NVM flag
 
 # Upcoming features I'm working on / planning:
 - Tweaking system sensor configurations for optimal precision and performance.
-- Some missing or unfinished settings in the settings page (like at-runtime RTC / median sample count / log elements and formatting configuration)
+- Some missing or unfinished settings in the settings page (like at-runtime manual median sample count / log elements and formatting configuration)
 - Support for ADS1115 ADCs and EAS-based DIY sensors over I2C
 - SD-card hot-plugging
 - UI improvements, further bugfixes and optimizations, etc.
