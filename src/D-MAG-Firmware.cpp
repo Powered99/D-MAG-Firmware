@@ -55,6 +55,7 @@ int main()
     fs::init_sd();
     ctrl::init_btn();
     ui::init();
+    fgm::launch_polling();
     
     bool die = logger::logging_status == logger::LOG_STATUS::LOGGING;
     
@@ -64,8 +65,6 @@ int main()
 
 
     //set_rtc();
-    
-    fgm::launch_polling();
 
     // Main loop
     while (true) {
