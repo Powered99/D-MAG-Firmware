@@ -90,7 +90,8 @@ You can still use previous revisions of the device but you'll have to change the
 ***WARNING:*** *Make sure the RP2040 ADCs don't receive more than 3.3V at their inputs! If your sensors output more, use a voltage divider to prevent damage.*
 
 ## Compile & Upload code
-Use VSCode with the Raspberry Pi Pico extension to compile and flash the code or copy the build/D-MAG-Firmware.uf2 file onto the Pico in BOOTSEL mode.
+Clone this repository and use VSCode with the Raspberry Pi Pico extension to import the project.  
+Compile and flash the code or copy the compiled build/D-MAG-Firmware.uf2 file onto the Pico in BOOTSEL mode.
 
 # Credits:
 ## D-MAG-Firmware by Dominik Kultys
