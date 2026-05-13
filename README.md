@@ -25,9 +25,9 @@ that some of these upcoming features or bugs could take a long time to or never 
 - Autonomous logger recovery from crashes / power outages using NVM flag
 
 # Upcoming features I'm working on / planning:
-- Tweaking system sensor configurations for optimal precision and performance.
-- Some missing or unfinished settings in the settings page (like at-runtime manual median sample count / log elements and formatting configuration)
+- Some missing or unfinished settings in the settings page (like log elements and formatting configuration)
 - Support for ADS1115 ADCs and EAS-based DIY sensors over I2C
+- Configuration for logging raw voltage / frequency values
 - SD-card hot-plugging
 - UI improvements, further bugfixes and optimizations, etc.
 
