@@ -19,7 +19,7 @@ that some of these upcoming features or bugs could take a long time to or never 
 - Takes up to 2048 sensor samples and filters them using an averaged median array (up to 1024 filtered samples)
 - Keeps track of time and reads temperature using RTC
 - Logs data with accurate date/time on an SD card with a flexible logging system in various formats (temporarily only IAGA-2002)
-- Backward compatibility with other hardware revisions
+- Backward compatibility with older hardware revisions
 - Full control thanks to the intuitive and powerful UI:
   - Displays sensor readings / settings, etc. in the UI
   - Sensor calibrations, editable settings and configurations (eg. RTC setup) at runtime
