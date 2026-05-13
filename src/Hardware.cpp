@@ -299,13 +299,13 @@ void load_sample_counts(){
     }
 }
 // Saves the current sample count to the SET_SAMPLE_COUNT buffer.
-void save_sample_count(uint8_t ch){
+void apply_sample_count(uint8_t ch){
     SET_SAMPLE_COUNT[ch] = SAMPLE_COUNT[ch];
 }
 // Saves all the current sample counts to the SET_SAMPLE_COUNT buffer.
-void save_sample_counts(){
+void apply_sample_counts(){
     for(size_t i = 0; i < SENSOR_CH_COUNT; i++){
-        save_sample_count(i);
+        apply_sample_count(i);
     }
 }
 
@@ -333,13 +333,13 @@ void load_median_offsets(){
     }
 }
 // Saves the current median sample offset to the SET_MEDIAN_SAMPLE_OFFSET buffer.
-void save_median_offset(uint8_t ch){
+void apply_median_offset(uint8_t ch){
     SET_MEDIAN_SAMPLE_OFFSET[ch] = MEDIAN_SAMPLE_OFFSET[ch];
 }
 // Saves all current median sample offsets to the SET_MEDIAN_SAMPLE_OFFSET buffer.
-void save_median_offsets(){
+void apply_median_offsets(){
     for(size_t i = 0; i < SENSOR_CH_COUNT; i++){
-        save_median_offset(i);
+        apply_median_offset(i);
     }
 }
 
@@ -634,8 +634,8 @@ static void unpack(const Block& b) {
     logger::DATA_FORMAT     = static_cast<logger::FORMATS>(b.data_format);
     logger::log_interval_ms = b.log_interval_ms;
     logger::logging_status  = static_cast<logger::LOG_STATUS>(b.logging_status);
-    fgm::save_sample_counts();
-    fgm::save_median_offsets();
+    fgm::apply_sample_counts();
+    fgm::apply_median_offsets();
 }
 
 bool check() {
@@ -679,8 +679,8 @@ void load_defaults(){
     fgm::set_sample_counts((uint[fgm::SENSOR_CH_COUNT]){128, 128, 128, 128});
     //fgm::set_sample_counts((uint[fgm::SENSOR_CH_COUNT]){1, 1, 1, 1});
     fgm::set_median_offsets((uint[fgm::SENSOR_CH_COUNT]){32, 32, 32, 32});
-    fgm::save_sample_counts();
-    fgm::save_median_offsets();
+    fgm::apply_sample_counts();
+    fgm::apply_median_offsets();
     logger::set_log_interval(6000);
 }
 

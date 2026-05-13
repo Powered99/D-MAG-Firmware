@@ -789,8 +789,9 @@ namespace settings{
         
         namespace sampling{
             uint8_t selected_option = 0;
-            uint8_t option_count = fgm::SENSOR_CH_COUNT + 2; // Channels + Submit + Cancel
+            uint8_t option_count = fgm::SENSOR_CH_COUNT * 2 + 2; // Channels (Samples + Median Samples) + Submit + Cancel
             int sample_count[fgm::SENSOR_CH_COUNT];
+            int median_sample_count[fgm::SENSOR_CH_COUNT];
             bool editing_sample_count = false;
             int change_amount = 1;
 
@@ -858,14 +859,16 @@ namespace settings{
                 settings::fgm_conf::sampling::controls::add_controls();
                 for(int ch = 0; ch < fgm::SENSOR_CH_COUNT; ch++){
                     sample_count[ch] = fgm::SET_SAMPLE_COUNT[ch];
+                    median_sample_count[ch] = fgm::SET_MEDIAN_SAMPLE_OFFSET[ch] * 2;
                 }
                 selected_option = 0;
             }
             void submit_sample_count(){
                 for(int ch = 0 ; ch < fgm::SENSOR_CH_COUNT; ch++){
                     fgm::set_sample_count(ch, (uint)sample_count[ch]);
-                    fgm::save_sample_count(ch);
-                    fgm::MEDIAN_SAMPLE_OFFSET[ch] = (uint)sample_count[ch] / fgm::MEDIAN_OFFSET_SAMPLE_DIVIDEND; // Temporarily the median will be taken from half of the configured sample count
+                    fgm::set_median_offset(ch, (uint)median_sample_count[ch] / 2);
+                    fgm::apply_sample_count(ch);
+                    fgm::apply_median_offset(ch);
                 }
             }
 
@@ -893,13 +896,27 @@ namespace settings{
             }
 
             void increase_sample_count(){
-                sample_count[selected_option] += change_amount;
-                if(sample_count[selected_option] >= fgm::MAX_SAMPLE_COUNT) sample_count[selected_option] = fgm::MAX_SAMPLE_COUNT;
+                uint8_t ch = selected_option / 2;
+                if(selected_option % 2 == 0){
+                    sample_count[ch] += change_amount;
+                    if(sample_count[ch] >= fgm::MAX_SAMPLE_COUNT) sample_count[ch] = fgm::MAX_SAMPLE_COUNT;
+                } else {
+                    median_sample_count[ch] += change_amount;
+                    if(median_sample_count[ch] >= sample_count[ch] / 2) median_sample_count[ch] = sample_count[ch] / 2; // Make sure median sample count doesnt exceed half of sample count
+                }
             }
             void decrease_sample_count(){
-                sample_count[selected_option] -= change_amount;
-                if(sample_count[selected_option] <= 0) sample_count[selected_option] = 1;
-            } 
+                uint8_t ch = selected_option / 2;
+                if(selected_option % 2 == 0){
+                    sample_count[ch] -= change_amount;
+                    if(sample_count[ch] <= 0) sample_count[selected_option] = 1;
+                    if(sample_count[ch] / 2 <= median_sample_count[ch]) median_sample_count[ch] = sample_count[ch] / 2; // Make sure median sample count doesnt exceed half of sample count
+                } else {
+                    median_sample_count[ch] -= change_amount;
+                    if(median_sample_count[ch] <= 1) median_sample_count[ch] = 1;
+                }
+            }
+
             void enter_edit_sample_count(){
                 ctrl::set_enabled(sampling::controls::ctrl_next_id, false);
                 ctrl::set_enabled(sampling::controls::ctrl_prev_id, false);
@@ -950,10 +967,9 @@ namespace settings{
                     else enter_edit_sample_count();
                 }
             }
-            void draw(){ // TODO: Implement median configuration
+            void draw(){
                 char buf[20];
                 uint16_t color;
-                static uint8_t prev_sample_count_len[fgm::SENSOR_CH_COUNT];
                 uint8_t y = status_bar_margin + title_margin;
 
                 gfx::text((char*)" CH  SAMPLE MEDIAN", 0, y, font, subtitle_text_color);
@@ -962,24 +978,26 @@ namespace settings{
 
                 // Draw each channel sample count
                 for(int ch = 0; ch < fgm::SENSOR_CH_COUNT; ch++){
-                    snprintf(buf, sizeof(buf), " CH%d: %d Samples", ch + 1, sample_count[ch]);
-                    
-                    uint16_t color;
-                    if(selected_option == ch){
-                        if(editing_sample_count) color = editing_text_color;
-                        else color = setting_selected_text_color;
-                    }else color = fgm::SENSOR_STATES[ch] == fgm::SENSOR_STATE::ACTIVE ? positive_text_color : fgm::SENSOR_STATES[ch] == fgm::SENSOR_STATE::INACTIVE ? inactive_text_color : negative_text_color;
+                    bool ch_selected = (uint8_t) (selected_option / 2) == ch;
+                    bool primary = selected_option % 2 == 0;
 
-                    prev_sample_count_len[ch] = gfx::smart_text(buf, 0, y, font, color, prev_sample_count_len[ch], font_width, font_height);
+                    snprintf(buf, sizeof(buf), " CH%d: %4d", ch + 1, sample_count[ch]);
+                    uint16_t color = (ch_selected && primary) ? (editing_sample_count ? editing_text_color : setting_selected_text_color) : (fgm::SENSOR_STATES[ch] == fgm::SENSOR_STATE::ACTIVE ? positive_text_color : fgm::SENSOR_STATES[ch] == fgm::SENSOR_STATE::INACTIVE ? inactive_text_color : negative_text_color);
+                    gfx::smart_text(buf, 0, y, font, color, 10, font_width, font_height);
+                    
+                    snprintf(buf, sizeof(buf), "%4d", median_sample_count[ch]);
+                    color = (ch_selected && !primary) ? (editing_sample_count ? editing_text_color : setting_selected_text_color) : (fgm::SENSOR_STATES[ch] == fgm::SENSOR_STATE::ACTIVE ? positive_text_color : fgm::SENSOR_STATES[ch] == fgm::SENSOR_STATE::INACTIVE ? inactive_text_color : negative_text_color);
+                    gfx::smart_text(buf, 13 * font_width, y, font, color, 4, font_width, font_height);
+
                     y += line_margin;
                 }
 
                 y = status_bar_margin + subtitle_margin + line_margin * 6;
-                color = selected_option == fgm::SENSOR_CH_COUNT ? setting_selected_text_color : setting_text_color;
+                color = selected_option == option_count - 2 ? setting_selected_text_color : setting_text_color;
                 gfx::text((char*)"Submit", 0, y, font, color);
                 
                 y += line_margin;
-                color = selected_option == fgm::SENSOR_CH_COUNT + 1 ? setting_selected_text_color : setting_text_color;
+                color = selected_option == option_count - 1 ? setting_selected_text_color : setting_text_color;
                 gfx::text((char*)"Cancel", 0, y, font, color);
             }
         };

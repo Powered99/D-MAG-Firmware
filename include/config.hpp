@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include "pico/stdlib.h"
 
-#define FIRMWARE_VERSION "1.9.1 DEV"
+#define FIRMWARE_VERSION "1.9.2 DEV"
 
 namespace fgm{
     enum class SENSOR_MODE: int8_t {

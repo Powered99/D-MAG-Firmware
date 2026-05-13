@@ -72,15 +72,15 @@ namespace fgm{
     void set_sample_counts(uint sample_counts[SENSOR_CH_COUNT]); // Sets all used sample counts to the given array of counts.
     void load_sample_count(uint8_t ch); // Sets the used sample count to the corresponding value from the SET_SAMPLE_COUNT buffer.
     void load_sample_counts(); // Sets all the used sample counts to the corresponding values from the SET_SAMPLE_COUNT buffer.
-    void save_sample_count(uint8_t ch); // Saves the current sample count to the SET_SAMPLE_COUNT buffer.
-    void save_sample_counts(); // Saves all the current sample counts to the SET_SAMPLE_COUNT buffer.
+    void apply_sample_count(uint8_t ch); // Saves the current sample count to the SET_SAMPLE_COUNT buffer.
+    void apply_sample_counts(); // Saves all the current sample counts to the SET_SAMPLE_COUNT buffer.
 
     void set_median_offset(uint8_t ch, uint sample_count); // Sets the used median sample offset to the given value.
     void set_median_offsets(uint sample_counts[SENSOR_CH_COUNT]); // Sets the used median sample offsets to the given array of offsets.
     void load_median_offset(uint8_t ch); // Sets the used median sample offset to the corresponding value from the SET_MEDIAN_SAMPLE_OFFSET buffer.
     void load_median_offsets(); // Sets all the used median sample offsets to the corresponding values from the SET_MEDIAN_SAMPLE_OFFSET buffer.
-    void save_median_offset(uint8_t ch); // Saves the current median sample offset to the SET_MEDIAN_SAMPLE_OFFSET buffer.
-    void save_median_offsets(); // Saves all the current median sample offsets to the SET_MEDIAN_SAMPLE_OFFSET buffer.
+    void apply_median_offset(uint8_t ch); // Saves the current median sample offset to the SET_MEDIAN_SAMPLE_OFFSET buffer.
+    void apply_median_offsets(); // Saves all the current median sample offsets to the SET_MEDIAN_SAMPLE_OFFSET buffer.
 
     void calculate_nT(uint8_t ch);
     float get_nT(uint8_t ch);
