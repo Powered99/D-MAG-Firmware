@@ -2,3 +2,4 @@ build
 archive
 tools
 .vscode
+pico_sdk_import.cmake
