@@ -12,6 +12,7 @@
 #include "math.h"
 #include "config.hpp"
 #include "Formats.hpp"
+#include "Math.hpp"
 
 namespace ui{
 
@@ -902,6 +903,7 @@ namespace settings{
                     if(sample_count[ch] >= fgm::MAX_SAMPLE_COUNT) sample_count[ch] = fgm::MAX_SAMPLE_COUNT;
                 } else {
                     median_sample_count[ch] += change_amount;
+                    if(median_sample_count[ch] >= math::MAX_FILTERED_COUNT) median_sample_count[ch] = math::MAX_FILTERED_COUNT;
                     if(median_sample_count[ch] >= sample_count[ch] / 2) median_sample_count[ch] = sample_count[ch] / 2; // Make sure median sample count doesnt exceed half of sample count
                 }
             }

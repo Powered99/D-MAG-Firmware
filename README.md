@@ -14,20 +14,23 @@ that some of these upcoming features or bugs could take a long time to or never 
 **Feel free to use and modify it however!** - If you do, please **credit me** in your project if you're publishing it / it's documentation.
 
 # Features:
-- Reads from 4 or more PWM FGM3+ sensors, via PWM or ADCs (Auto-detect sensors on non-disabled channels)
+- Reads from 4 or more sensors (eg. FGM3-Pro/Plus, Hall-Effect, etc.), via PWM or ADCs (Auto-detects sensors on non-disabled channels)
 - Utilizes both CPU-Cores to drastically improve performance
-- Takes up to 2048 sensor samples and filters them using an averaged median array (up to 128 filtered samples)
+- Takes up to 2048 sensor samples and filters them using an averaged median array (up to 1024 filtered samples)
 - Keeps track of time and reads temperature using RTC
-- Logs data with accurate date/time on an SD card with a flexible logging system in various formats (IAGA-2002 / DMAG-2026)
-- Displays sensor readings / settings, etc. in the UI
-- Sensor calibrations, setting the RTC and configurable settings at runtime
+- Logs data with accurate date/time on an SD card with a flexible logging system in various formats (temporarily only IAGA-2002)
+- Backward compatibility with other hardware revisions
+- Full control thanks to the intuitive and powerful UI:
+  - Displays sensor readings / settings, etc. in the UI
+  - Sensor calibrations, editable settings and configurations (eg. RTC setup) at runtime
 - Saving and loading settings and calibrations to / from NVM (non-volatile-memory)
 - Autonomous logger recovery from crashes / power outages using NVM flag
 
 # Upcoming features I'm working on / planning:
-- Some missing or unfinished settings in the settings page (like log elements and formatting configuration)
 - Support for ADS1115 ADCs and EAS-based DIY sensors over I2C
 - Configuration for logging raw voltage / frequency values
+- A new, flexible logging format - "DMAG-2026"
+- Some extra runtime settings in the settings page (like log elements and formatting configuration)
 - SD-card hot-plugging
 - UI improvements, further bugfixes and optimizations, etc.
 
