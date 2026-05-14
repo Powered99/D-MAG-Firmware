@@ -11,14 +11,13 @@
 #include <stdlib.h>
 #include "pico/stdlib.h"
 
-#define FIRMWARE_VERSION "1.8.7"
-
 namespace fgm{
     enum class SENSOR_MODE: int8_t {
         DISABLED = -1,
         FREQ = 0,
         HARMONIC = 1,
-        ANALOG = 2
+        ANALOG = 2,
+        ANALOG_ADS1115 = 3
     };
         
     constexpr float B_MIN = -50e-6f; // Lowest value in earth's magnetic field (-50uT)
@@ -31,10 +30,12 @@ namespace fgm{
     };
 
     constexpr uint8_t SENSOR_CH_COUNT = 4; // Edit to change sensor count
+    constexpr uint16_t MIN_IMPULSES_COUNT = 200; // Required impulses per sample - higher numbers can improve precision at the cost of speed.
+    constexpr uint64_t FREQ_TIMEOUT = 50000; // If no impulse after 50ms, set to inactive.
 
-    extern SENSOR_MODE SENSOR_MODES[SENSOR_CH_COUNT];
-    extern uint SAMPLE_COUNT[SENSOR_CH_COUNT]; // Actual used sample count (set with set_sample_count)
-    extern uint MEDIAN_SAMPLE_OFFSET[SENSOR_CH_COUNT]; // Offset of median samples (MEDIAN_SAMPLE_OFFSET <- center -> MEDIAN_SAMPLE_OFFSET), total median samples: 2x offset
+    extern volatile SENSOR_MODE SENSOR_MODES[SENSOR_CH_COUNT];
+    extern volatile uint SAMPLE_COUNT[SENSOR_CH_COUNT]; // Actual used sample count (set with set_sample_count)
+    extern volatile uint MEDIAN_SAMPLE_OFFSET[SENSOR_CH_COUNT]; // Offset of median samples (MEDIAN_SAMPLE_OFFSET <- center -> MEDIAN_SAMPLE_OFFSET), total median samples: 2x offset
     extern CALIB_DATA SENSOR_CALIBRATIONS[SENSOR_CH_COUNT];
     
 }
@@ -45,5 +46,10 @@ namespace logger{
         DMAG2026
     };
     extern FORMATS DATA_FORMAT;
+}
+
+namespace ads1115{
+    constexpr uint64_t ADS1115_POLLING_RATE_US = 10000; // poll once every 10ms
+    constexpr bool ENABLE_ADS1115 = true; // Only enable if ADS1115 is connected in hardware.
 }
 

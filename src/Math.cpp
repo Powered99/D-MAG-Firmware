@@ -48,7 +48,7 @@ namespace math{
 
         double sum = 0.0;
         for (int i = 0; i < median_element_count; i++) {
-            sum += filtered_values[i];
+            sum += (double) filtered_values[i];
         }
         return sum / (double) median_element_count;
     }

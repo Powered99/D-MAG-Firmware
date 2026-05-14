@@ -19,21 +19,6 @@
 #include "Datalogger.hpp"
 #include "Math.hpp"
 
-// Temporary solution to set RTC time until the setting gets implemented, uncomment the function call, change the time data, and compile & flash. 
-// Make sure to then re-comment the call and flash again to prevent the rtc being reset to this time on each boot!
-void set_rtc(){
-    ds3231_datetime_t dt = {
-        .hour = 1,
-        .minutes = 25,
-        .seconds = 50,
-        .day = 16,
-        .dotw = 1,
-        .month = 3,
-        .year = 2026,
-    };
-    rtc::set_datetime(&dt);
-}
-
 inline void dont(){
     ui::set_page(6); // Go to Datalogger page if logging was active before reboot
     logger::start_logging(); // Recover logging state after reboot
@@ -49,12 +34,13 @@ int main()
     if(logger::logging_status == logger::LOG_STATUS::ERROR){
         logger::logging_status = logger::LOG_STATUS::IDLE; // Reset logging status if it was in error state, to prevent lockout from logging
     }
+    rtc::init_rtc(); // Already initializes i2c, call before other i2c devices (like fgm's ADS1115 if enabled)
     fgm::init_sensors();
     disp::init_display();
-    rtc::init_rtc();
     fs::init_sd();
     ctrl::init_btn();
     ui::init();
+    fgm::launch_polling();
     
     bool die = logger::logging_status == logger::LOG_STATUS::LOGGING;
     
@@ -62,13 +48,10 @@ int main()
         dont();
     }
 
-
-    //set_rtc();
-    
     // Main loop
     while (true) {
         ctrl::handle_events();
-        fgm::read_sensors();
+        fgm::read_channels_ads1115();
         rtc::loop();
         ui::draw_page();
         logger::loop();

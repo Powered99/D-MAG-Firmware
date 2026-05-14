@@ -1,3 +1,6 @@
 build
 archive
 tools
+.vscode
+pico_sdk_import.cmake
+pico_flash_region.ld

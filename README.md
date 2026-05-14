@@ -1,5 +1,8 @@
 # D-MAG-Firmware
-A vastly configurable Flux-Gate-Magnetometer firmware for the Raspberry Pi Pico (RP2040) used to read from up to 4 FGM3+ fluxgate magnetometers (via PWM or ADC).
+**Version: v1.9.6**  
+A vastly configurable and very flexible geomagnetic observatory firmware for the Raspberry Pi Pico (RP2040) microcontroller.  
+Currently supports a variety of sensors that output an analog signal or square wave (eg. FGM3-Plus/Pro).  
+It reads, processes, displays and logs data, lets you configure settings / calibrations at runtime using an intuitive and powerful UI and more.  
 
 The D-MAG-Firmware is still **in early development**. Therefore, using it can still be buggy and incomplete.
 
@@ -9,22 +12,23 @@ that some of these upcoming features or bugs could take a long time to or never 
 **Feel free to use and modify it however!** - If you do, please **credit me** in your project if you're publishing it / it's documentation.
 
 # Features:
-- Read from 4 or more PWM FGM3+ sensors, via PWM or ADCs
-- Keep track of time and read temperature with RTC
-- (Auto-detect sensors on non-disabled channels)
-- Take up to 2048 sensor samples and filter them using an averaged median array (up to 128 filtered samples)
-- Log data with accurate date/time on an SD card with a flexible logging system in various formats (IAGA-2002 / DMAG-2026)
-- Display sensor readings / settings, etc. in the UI
-- Sensor calibrations and configurable settings at runtime
+- Reads from 4 or more sensors (eg. FGM3-Pro/Plus, Hall-Effect, etc.), via PWM, ADCs or (if enabled in config) an ADS1115 ADC
+- Utilizes both CPU-Cores to drastically improve performance
+- Takes up to 2048 sensor samples and filters them using an averaged median array (up to 1024 filtered samples)
+- Keeps track of time and reads temperature using RTC
+- Logs data with accurate date/time on an SD card with a flexible logging system in various formats: IAGA-2002, DMAG-2026
+- Backward compatibility with older hardware revisions
+- Full control thanks to the intuitive and powerful UI:
+  - Displays sensor readings / settings, etc. in the UI
+  - Sensor calibrations, editable settings and configurations (eg. RTC setup) at runtime
 - Saving and loading settings and calibrations to / from NVM (non-volatile-memory)
-- Autonomous logger recovery from crashes / power outages using NVM
+- Autonomous logger recovery from crashes / power outages using NVM flag
 
 # Upcoming features I'm working on / planning:
-- Running measurements on CORE #1 (to avoid overhead from other system components, thus improving precision and speed)
-- Some missing or unfinished settings in the settings page (like at-runtime RTC / median sample count / log elements and formatting configuration)
-- Compatibility with EAS-based DIY sensors over I2C
+- EAS-based DIY sensors over I2C
+- Some extra runtime settings in the settings page (like log elements and formatting configuration)
 - SD-card hot-plugging
-- Other features, like display power-saving, further optimizations, etc.
+- UI improvements, further bugfixes and optimizations, etc.
 
 # Usage:
 ## Connect components:
@@ -40,9 +44,6 @@ You can still use previous revisions of the device but you'll have to change the
 | CS     | 13   |
 | RST    | 14   |
 | DC     | 15   |
-| BL*    | 8    | 
-
-*(BL: Backlight pin, might not be present on some TFT modules. Display powersaving W.I.P.)*
 
 ### SD Card (SPI0)
 | Signal | GPIO |
@@ -52,7 +53,7 @@ You can still use previous revisions of the device but you'll have to change the
 | RX     | 16   |
 | CS     | 17   |
 
-### RTC (DS3231, I2C0)
+### I2C (DS3231 RTC, ADS1115) (I2C0)
 | Signal | GPIO |
 |--------|------|
 | SDA    | 20   |
@@ -65,6 +66,8 @@ You can still use previous revisions of the device but you'll have to change the
 | SELECT | 4   |
 | RIGHT  | 6   |
 
+*NOTE: The buttons should pull the GPIO pin down when pressed.*
+
 ### Frequency Sensors
 | Sensor | GPIO |
 |--------|------|
@@ -72,6 +75,8 @@ You can still use previous revisions of the device but you'll have to change the
 | CH1    | 7    |
 | CH2    | 5    |
 | CH3    | 3    |
+
+***WARNING:*** *Make sure the RP2040 doesn't receive more than 3.3V at it's input! If your sensors output more, eg. 5V, use a level shifter to prevent damage.*
 
 ### Analog Sensors
 | Sensor | GPIO |
@@ -81,21 +86,27 @@ You can still use previous revisions of the device but you'll have to change the
 | CH2    | 26   |
 | CH3    |  *Unavailable on official PICO*   |
 
+***WARNING:*** *Make sure the RP2040 ADCs don't receive more than 3.3V at their inputs! If your sensors output more, use a voltage divider to prevent damage.*
+
+If you want precise analog sensor readings, connect an ADS1115 to the I2C pins listed above and
+enable the ADS1115 driver in config.hpp by setting "ENABLE_ADS1115" under the "ads1115" namespace to true.
+This is an optional feature, as most current D-MAG-Firmware compatible devices don't feature an ADS1115.
 
 ## Compile & Upload code
-Use VSCode with the Raspberry Pi Pico extension to compile and flash the code or copy the build/D-MAG-Firmware.uf2 file onto the Pico in BOOTSEL mode.
+Clone this repository and use VSCode with the Raspberry Pi Pico extension to import the project.  
+Compile and flash the code or copy the compiled build/D-MAG-Firmware.uf2 file onto the Pico in BOOTSEL mode.
 
 # Credits:
 ## D-MAG-Firmware by Dominik Kultys
 
 ## Third party libraries:
-ads1x15: https://github.com/gavinlyonsrepo/ADS1x15_PICO
+pico-ads1115: https://github.com/antgon/pico-ads1115/blob/main/lib/ads1115.c
 
-ds3231: https://github.com/antgon/pico-ds3231
+pico-ds3231: https://github.com/antgon/pico-ds3231
 
 displaylib_16: https://github.com/gavinlyonsrepo/displaylib_16bit_PICO
 
-fatfs library: https://github.com/carlk3/no-OS-FatFS-SD-SPI-RPi-Pico
+no-OS-FatFS-SDI-RPi-Pico: https://github.com/carlk3/no-OS-FatFS-SD-SPI-RPi-Pico
 
 # License:
 D-MAG-Firmware

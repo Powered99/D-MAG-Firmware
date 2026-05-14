@@ -52,14 +52,19 @@ add_executable(D-MAG-Firmware
     src/Math.cpp
     src/Formats.cpp
     src/Config.cpp
-    lib/ads1x15/ads1x15.cpp
     ${DISPLAYLIB_16_SRC}
     )
 add_subdirectory(lib/fatfs/no-OS-FatFS-SD-SPI-RPi-Pico/FatFs_SPI)
 add_subdirectory(lib/ds3231)
+add_subdirectory(lib/pico-ads1115)
 
 pico_set_program_name(D-MAG-Firmware "D-MAG-Firmware")
-pico_set_program_version(D-MAG-Firmware "1.8")
+
+set(FW_VERSION "1.9.6")
+pico_set_program_version(D-MAG-Firmware ${FW_VERSION})
+target_compile_definitions(D-MAG-Firmware PRIVATE
+    FIRMWARE_VERSION="${FW_VERSION}"
+)
 
 # Modify the below lines to enable/disable output over UART/USB
 pico_enable_stdio_uart(D-MAG-Firmware 0)
@@ -93,7 +98,16 @@ target_link_libraries(D-MAG-Firmware
         pico_multicore
         FatFs_SPI
         pico-ds3231
+        pico-ads1115
         )
         
+target_link_options(D-MAG-Firmware PRIVATE -Wl,--print-memory-usage)
+
+# Remove the FatFS library's rtc.c from compilation, since we're overriding with our own RTC function.
+set_source_files_properties(
+    lib/fatfs/no-OS-FatFS-SD-SPI-RPi-Pico/FatFs_SPI/src/rtc.c
+    PROPERTIES HEADER_FILE_ONLY TRUE
+)
+
 pico_add_extra_outputs(D-MAG-Firmware)
 
