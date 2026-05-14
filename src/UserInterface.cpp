@@ -465,6 +465,7 @@ namespace settings{
             draw_time_value(buf, x, y, 2);
             x = 0; y += line_margin;
 
+        
             // Year, month, day
             snprintf(buf, sizeof(buf), "%04d-", dt.year);
             x = draw_time_value(buf, x, y, 3);
@@ -983,12 +984,18 @@ namespace settings{
                     bool ch_selected = (uint8_t) (selected_option / 2) == ch;
                     bool primary = selected_option % 2 == 0;
 
-                    snprintf(buf, sizeof(buf), " CH%d: %4d", ch + 1, sample_count[ch]);
-                    uint16_t color = (ch_selected && primary) ? (editing_sample_count ? editing_text_color : setting_selected_text_color) : (fgm::SENSOR_STATES[ch] == fgm::SENSOR_STATE::ACTIVE ? positive_text_color : fgm::SENSOR_STATES[ch] == fgm::SENSOR_STATE::INACTIVE ? inactive_text_color : negative_text_color);
-                    gfx::smart_text(buf, 0, y, font, color, 10, font_width, font_height);
+                    uint16_t ch_state_color = (fgm::SENSOR_STATES[ch] == fgm::SENSOR_STATE::ACTIVE ? positive_text_color : fgm::SENSOR_STATES[ch] == fgm::SENSOR_STATE::INACTIVE ? inactive_text_color : negative_text_color);
+
+                    snprintf(buf, sizeof(buf), " CH%d: ", ch + 1);
+                    uint16_t color = ch_selected ? (editing_sample_count ? editing_text_color : setting_selected_text_color) : ch_state_color;
+                    gfx::text(buf, 0, y, font, color);
+
+                    snprintf(buf, sizeof(buf), "%4d", sample_count[ch]);
+                    color = (ch_selected && primary) ? (editing_sample_count ? editing_text_color : setting_selected_text_color) : ch_state_color;
+                    gfx::smart_text(buf, 6 * font_width, y, font, color, 4, font_width, font_height);
                     
                     snprintf(buf, sizeof(buf), "%4d", median_sample_count[ch]);
-                    color = (ch_selected && !primary) ? (editing_sample_count ? editing_text_color : setting_selected_text_color) : (fgm::SENSOR_STATES[ch] == fgm::SENSOR_STATE::ACTIVE ? positive_text_color : fgm::SENSOR_STATES[ch] == fgm::SENSOR_STATE::INACTIVE ? inactive_text_color : negative_text_color);
+                    color = (ch_selected && !primary) ? (editing_sample_count ? editing_text_color : setting_selected_text_color) : ch_state_color;
                     gfx::smart_text(buf, 13 * font_width, y, font, color, 4, font_width, font_height);
 
                     y += line_margin;
