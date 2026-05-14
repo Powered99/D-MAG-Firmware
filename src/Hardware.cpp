@@ -212,7 +212,13 @@ void read_channels_ads1115(){
         for(uint8_t ch = 0; ch < SENSOR_CH_COUNT; ch++){
             if(SENSOR_MODES[ch] != SENSOR_MODE::ANALOG_ADS1115) continue;
             SENSOR_STATES[ch] = SENSOR_STATE::ACTIVE;
-            voltages[ch] = ads1115::read_volts(ch);
+
+            float voltage = ads1115::read_volts(ch);
+
+            uint32_t save = spin_lock_blocking(readings_lock);
+            voltages[ch] = voltage;
+            spin_unlock(readings_lock, save);
+
         }
         last_poll_timestamp = now;
     }
@@ -277,7 +283,7 @@ float get_nT(uint8_t ch){
 }
 
 float get_volts(uint8_t ch){
-    if(SENSOR_MODES[ch] == SENSOR_MODE::ANALOG){
+    if(SENSOR_MODES[ch] == SENSOR_MODE::ANALOG || SENSOR_MODES[ch] == SENSOR_MODE::ANALOG_ADS1115){
         uint32_t save = spin_lock_blocking(readings_lock);
         float result_V = voltages[ch];
         spin_unlock(readings_lock, save);
@@ -596,7 +602,7 @@ namespace rtc{
 
 namespace ads1115{
     bool ads1115_initialized = false;
-    static ads1115_adc adc;
+    struct ads1115_adc adc;
 
     void configure_ads1115(ads1115_pga_t pga, ads1115_rate_t rate){
         if(!ads1115_initialized) return;
@@ -609,7 +615,7 @@ namespace ads1115{
         if(ads1115_initialized) return; // Don't reinitialize
         ads1115_init(I2C_PORT, 0x48, &adc);
         ads1115_initialized = true;
-        configure_ads1115(ADS1115_PGA_0_512, ADS1115_RATE_8_SPS); // default config
+        configure_ads1115(ADS1115_PGA_4_096, ADS1115_RATE_64_SPS); // default config
     }
 
     uint16_t read_raw(ads1115_mux_t mux){
@@ -623,7 +629,7 @@ namespace ads1115{
     }
 
     uint16_t read_raw_single(uint8_t ch){
-        if(!ads1115_initialized || ch >= 4) return 0; // Only 0-4 are valid
+        if(!ads1115_initialized || ch >= 4) return 0; // Only channels 0-3 are valid
 
         ads1115_mux_t mux;
         switch (ch) {
