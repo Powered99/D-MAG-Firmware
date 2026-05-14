@@ -57,7 +57,7 @@ You can still use previous revisions of the device but you'll have to change the
 | RX     | 16   |
 | CS     | 17   |
 
-### RTC (DS3231, I2C0)
+### I2C (DS3231 RTC, ADS1115) (I2C0)
 | Signal | GPIO |
 |--------|------|
 | SDA    | 20   |
