@@ -92,6 +92,9 @@ You can still use previous revisions of the device but you'll have to change the
 
 ***WARNING:*** *Make sure the RP2040 ADCs don't receive more than 3.3V at their inputs! If your sensors output more, use a voltage divider to prevent damage.*
 
+If you need precise analog sensor readings, connect an ADS1115 to the I2C pins listed above.
+Make sure to enable the ADS1115 driver in config.hpp by setting "ENABLE_ADS1115" under the "ads1115" namespace to true.
+
 ## Compile & Upload code
 Clone this repository and use VSCode with the Raspberry Pi Pico extension to import the project.  
 Compile and flash the code or copy the compiled build/D-MAG-Firmware.uf2 file onto the Pico in BOOTSEL mode.
