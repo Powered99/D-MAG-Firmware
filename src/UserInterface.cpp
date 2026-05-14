@@ -1366,12 +1366,19 @@ void draw_channel_page(size_t ch){
     }
     
     // 'Channel {x} (@GPIO{y})
-    uint PIN = (fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::ANALOG || fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::HARMONIC) ? SENSOR_PINS_ANALOG[ch] : fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::FREQ ? SENSOR_PINS_FREQ[ch] : -1;
-    if(PIN == -1){
-        snprintf(buf, sizeof(buf), "Channel %d (N/C)", ch+1);
-    }else{
-        snprintf(buf, sizeof(buf), "Channel %d (@GPIO%d)", ch+1, PIN);
-    }
+    char connection_buf[10];
+    fgm::SENSOR_MODE mode = fgm::SENSOR_MODES[ch];
+
+    if(mode == fgm::SENSOR_MODE::FREQ || mode == fgm::SENSOR_MODE::ANALOG){
+
+        int PIN = mode == fgm::SENSOR_MODE::ANALOG ? SENSOR_PINS_ANALOG[ch] : mode == fgm::SENSOR_MODE::FREQ ? SENSOR_PINS_FREQ[ch] : -1;
+        if(PIN == -1) strcpy(connection_buf, (char*)"N/C");
+        else snprintf(connection_buf, sizeof(connection_buf), "@GPIO%d", PIN);
+
+    }else if(mode == fgm::SENSOR_MODE::ANALOG_ADS1115 || mode == fgm::SENSOR_MODE::HARMONIC) 
+        strcpy(connection_buf, (char*)"I2C");
+    
+    snprintf(buf, sizeof(buf), "Channel %d (%s)", ch + 1, connection_buf);
     gfx::text(buf, 0, status_bar_margin + title_margin, font, subtitle_text_color);
 
     

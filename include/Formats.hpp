@@ -50,7 +50,7 @@ const element_t LOG_ELEMENTS[LOG_ELEMENT_COUNT] = {
     {ELEMENTS::MAG, 0, "X1"},
     {ELEMENTS::MAG, 1, "X2"},
     {ELEMENTS::MAG_DIFF, 0, "DX", 1},
-    {ELEMENTS::VOLTS, 2, "SHUNT"}
+    {ELEMENTS::TEMP, 0, "TEMP"}
 };
 
 
