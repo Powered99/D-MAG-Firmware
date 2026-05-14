@@ -1,7 +1,7 @@
 ## THIS IS THE DEV BRANCH! The project can be buggy, crash or even not compile! Please check the stable branch for usage!
 
 # D-MAG-Firmware
-**Version: v1.9.2 DEV**  
+**Version: v1.9.4 DEV**  
 A vastly configurable and very flexible geomagnetic observatory firmware for the Raspberry Pi Pico (RP2040) microcontroller.  
 Currently supports a variety of sensors that output an analog signal or square wave (eg. FGM3-Plus/Pro).  
 It reads, processes, displays and logs data, lets you configure settings / calibrations at runtime using an intuitive and powerful UI and more.  
