@@ -100,13 +100,13 @@ Compile and flash the code or copy the compiled build/D-MAG-Firmware.uf2 file on
 ## D-MAG-Firmware by Dominik Kultys
 
 ## Third party libraries:
-ads1x15: https://github.com/gavinlyonsrepo/ADS1x15_PICO
+pico-ads1115: https://github.com/antgon/pico-ads1115/blob/main/lib/ads1115.c
 
-ds3231: https://github.com/antgon/pico-ds3231
+pico-ds3231: https://github.com/antgon/pico-ds3231
 
 displaylib_16: https://github.com/gavinlyonsrepo/displaylib_16bit_PICO
 
-fatfs library: https://github.com/carlk3/no-OS-FatFS-SD-SPI-RPi-Pico
+no-OS-FatFS-SDI-RPi-Pico: https://github.com/carlk3/no-OS-FatFS-SD-SPI-RPi-Pico
 
 # License:
 D-MAG-Firmware
