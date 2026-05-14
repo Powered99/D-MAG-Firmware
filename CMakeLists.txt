@@ -59,7 +59,12 @@ add_subdirectory(lib/ds3231)
 add_subdirectory(lib/pico-ads1115)
 
 pico_set_program_name(D-MAG-Firmware "D-MAG-Firmware")
-pico_set_program_version(D-MAG-Firmware "1.9.2 DEV")
+
+set(FW_VERSION "1.9.3 DEV")
+pico_set_program_version(D-MAG-Firmware ${FW_VERSION})
+target_compile_definitions(D-MAG-Firmware PRIVATE
+    FIRMWARE_VERSION="${FW_VERSION}"
+)
 
 # Modify the below lines to enable/disable output over UART/USB
 pico_enable_stdio_uart(D-MAG-Firmware 0)

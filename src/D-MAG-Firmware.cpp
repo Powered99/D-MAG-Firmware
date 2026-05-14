@@ -34,9 +34,9 @@ int main()
     if(logger::logging_status == logger::LOG_STATUS::ERROR){
         logger::logging_status = logger::LOG_STATUS::IDLE; // Reset logging status if it was in error state, to prevent lockout from logging
     }
+    rtc::init_rtc(); // Already initializes i2c, call before other i2c devices (like fgm's ADS1115 if enabled)
     fgm::init_sensors();
     disp::init_display();
-    rtc::init_rtc();
     fs::init_sd();
     ctrl::init_btn();
     ui::init();
@@ -51,7 +51,7 @@ int main()
     // Main loop
     while (true) {
         ctrl::handle_events();
-        //fgm::read_sensors(); // Now handled on core1, started in fgm::launch_polling();
+        fgm::read_channels_ads1115();
         rtc::loop();
         ui::draw_page();
         logger::loop();

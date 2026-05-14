@@ -32,10 +32,10 @@
 #define SD_SPI_TX 11
 #define SD_SPI_SCK 10
 
-// RTC
-#define RTC_I2C_PORT i2c1
-#define RTC_I2C_SDA 14
-#define RTC_I2C_SCL 15
+// I2C Port (RTC & ADS1115)
+#define I2C_PORT i2c1
+#define I2C_SDA 14
+#define I2C_SCL 15
 
 // Buttons
 const uint8_t BTN_PINS[3] = {22, 26, 27};
@@ -75,10 +75,10 @@ const int8_t SENSOR_PINS_ANALOG[4] = {26, 27, 28, -1};
 #define SD_SPI_TX 19
 #define SD_SPI_SCK 18
 
-// RTC
-#define RTC_I2C_PORT i2c0
-#define RTC_I2C_SDA 20
-#define RTC_I2C_SCL 21
+// I2C Port (RTC & ADS1115)
+#define I2C_PORT i2c0
+#define I2C_SDA 20
+#define I2C_SCL 21
 
 // Buttons
 const uint8_t BTN_PINS[3] = {2, 4, 6};

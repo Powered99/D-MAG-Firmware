@@ -20,7 +20,9 @@
 #include <functional>
 #include "Config.hpp"
 #include "Datalogger.hpp"
-
+extern "C" {
+    #include "ads1115.h"
+}
 
 namespace disp{
     extern ST7735_TFT display;
@@ -35,10 +37,6 @@ namespace fgm{
         DISABLED = -1,
         INACTIVE = 0,
         ACTIVE = 1
-    };
-    struct freq_sample{
-        uint64_t delta_t = 0;
-        uint16_t count = 0;
     };
 
     constexpr float ANALOG_CONVERSION_FACTOR = 3.274f / (1 << 12); // system voltage / 12bit max value
@@ -61,6 +59,7 @@ namespace fgm{
     void init_sensors();
     void launch_polling();
     void read_sensors();
+    void read_channels_ads1115();
     void deactivate_sensor(size_t ch);
 
     void set_sensor_mode(uint8_t ch, SENSOR_MODE mode); // Will only work before initialization!
@@ -141,6 +140,16 @@ namespace status{
     void set_led(bool state);
     void set_led(bool state, absolute_time_t duration);
     void loop();
+}
+
+namespace ads1115{
+    extern bool ads1115_initialized;
+    void configure_ads1115(ads1115_pga_t pga, ads1115_rate_t rate);
+    void init_ads1115();
+    uint16_t read_raw(ads1115_mux_t mux);
+    uint16_t read_raw_single(uint8_t ch);
+    float read_volts(uint8_t ch);
+    float read_volts(ads1115_mux_t mux);
 }
 
 namespace nvm { // Non-volatile-memory (flash) storage for settings / configurations / calibrations

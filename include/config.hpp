@@ -11,14 +11,13 @@
 #include <stdlib.h>
 #include "pico/stdlib.h"
 
-#define FIRMWARE_VERSION "1.9.2 DEV"
-
 namespace fgm{
     enum class SENSOR_MODE: int8_t {
         DISABLED = -1,
         FREQ = 0,
         HARMONIC = 1,
-        ANALOG = 2
+        ANALOG = 2,
+        ANALOG_ADS1115 = 3
     };
         
     constexpr float B_MIN = -50e-6f; // Lowest value in earth's magnetic field (-50uT)
@@ -47,5 +46,10 @@ namespace logger{
         DMAG2026
     };
     extern FORMATS DATA_FORMAT;
+}
+
+namespace ads1115{
+    constexpr uint64_t ADS1115_POLLING_RATE_US = 10000; // poll once every 10ms
+    constexpr bool ENABLE_ADS1115 = false;
 }
 

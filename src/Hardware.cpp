@@ -110,9 +110,15 @@ void init_sensor(size_t ch, SENSOR_MODE mode){
         adc_gpio_init(PIN);
         ANALOG_INITIALIZED[ch] = true;
     
-    // Precise (ADS1115) analog driver
+    
     }else if (SENSOR_MODES[ch] == SENSOR_MODE::HARMONIC){
-        return; // Precise W.I.P.
+        return; // W.I.P.
+    
+    // Precise (ADS1115) analog driver (doesn't use configured sample count, uses an onboard hardware sampling solution instead)
+    }else if (SENSOR_MODES[ch] == SENSOR_MODE::ANALOG_ADS1115){
+        if(ads1115::ENABLE_ADS1115)
+            ads1115::init_ads1115(); // Make sure ads1115 is intialized. Note: Reinitialization safety already in init_ads1115
+        else deactivate_sensor(ch); // If ADS1115 is disabled in config, disable the sensor channel.
     }
     load_sample_count(ch); // Load default or configured sample count
     
@@ -194,6 +200,21 @@ void read_sensor_adc(uint8_t ch){
         voltages_local[ch] = filter_result * ANALOG_CONVERSION_FACTOR;
         calculate_nT(ch);
         sample_index[ch] = 0;
+    }
+}
+
+void read_channels_ads1115(){
+    static absolute_time_t last_poll_timestamp = 0;
+    if(!ads1115::ENABLE_ADS1115) return;
+
+    absolute_time_t now = get_absolute_time();
+    if(absolute_time_diff_us(last_poll_timestamp, now) >= ads1115::ADS1115_POLLING_RATE_US){
+        for(uint8_t ch = 0; ch < SENSOR_CH_COUNT; ch++){
+            if(SENSOR_MODES[ch] != SENSOR_MODE::ANALOG_ADS1115) continue;
+            SENSOR_STATES[ch] = SENSOR_STATE::ACTIVE;
+            voltages[ch] = ads1115::read_volts(ch);
+        }
+        last_poll_timestamp = now;
     }
 }
 
@@ -553,7 +574,7 @@ namespace rtc{
     }
 
     void init_rtc(){
-        ds3231_init(RTC_I2C_PORT, RTC_I2C_SDA, RTC_I2C_SCL, &ds3231);
+        ds3231_init(I2C_PORT, I2C_SDA, I2C_SCL, &ds3231);
         init_micros();
     }
 
@@ -573,6 +594,57 @@ namespace rtc{
 }
 
 
+namespace ads1115{
+    bool ads1115_initialized = false;
+    static ads1115_adc adc;
+
+    void configure_ads1115(ads1115_pga_t pga, ads1115_rate_t rate){
+        if(!ads1115_initialized) return;
+        ads1115_set_pga(pga, &adc);
+        ads1115_set_data_rate(rate, &adc);
+        ads1115_write_config(&adc);
+    }
+
+    void init_ads1115(){
+        if(ads1115_initialized) return; // Don't reinitialize
+        ads1115_init(I2C_PORT, 0x48, &adc);
+        ads1115_initialized = true;
+        configure_ads1115(ADS1115_PGA_0_512, ADS1115_RATE_8_SPS); // default config
+    }
+
+    uint16_t read_raw(ads1115_mux_t mux){
+        if(!ads1115_initialized) return 0;
+        ads1115_set_input_mux(mux, &adc);
+        ads1115_write_config(&adc);        
+
+        uint16_t adc_val;
+        ads1115_read_adc(&adc_val, &adc);
+        return adc_val;
+    }
+
+    uint16_t read_raw_single(uint8_t ch){
+        if(!ads1115_initialized || ch >= 4) return 0; // Only 0-4 are valid
+
+        ads1115_mux_t mux;
+        switch (ch) {
+            case 0: mux = ADS1115_MUX_SINGLE_0; break;
+            case 1: mux = ADS1115_MUX_SINGLE_1; break;
+            case 2: mux = ADS1115_MUX_SINGLE_2; break;
+            case 3: mux = ADS1115_MUX_SINGLE_3; break;
+        }
+        return read_raw(mux);
+    }
+
+    float read_volts(uint8_t ch){
+        uint16_t raw = read_raw_single(ch);
+        return ads1115_raw_to_volts(raw, &adc);
+    }
+
+    float read_volts(ads1115_mux_t mux){
+        uint16_t raw = read_raw(mux);
+        return ads1115_raw_to_volts(raw, &adc);
+    }
+}
 
 
 

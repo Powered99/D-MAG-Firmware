@@ -532,7 +532,8 @@ namespace settings{
                     case -1: val = 0; break;
                     case 0: val = 1; break;
                     case 1: val = 2; break;
-                    case 2: val = -1; break;
+                    case 2: val = 3; break;
+                    case 3: val = -1; break;
                     default: val = -1; break;
                 }
 
@@ -602,6 +603,10 @@ namespace settings{
                         case fgm::SENSOR_MODE::ANALOG:
                             ch_color = positive_text_color; 
                             mode_text = (char*)"Analog";
+                            break;
+                        case fgm::SENSOR_MODE::ANALOG_ADS1115:
+                            ch_color = ads1115::ENABLE_ADS1115 ? positive_text_color : negative_text_color;
+                            mode_text = (char*)"ADS1115";
                             break;
                         case fgm::SENSOR_MODE::HARMONIC:
                             ch_color = inactive_text_color;
@@ -1316,6 +1321,8 @@ void draw_info_page(){
     snprintf(buf, sizeof(buf), "v%s", FIRMWARE_VERSION);
     snprintf(buf, sizeof(buf), "%s", logger::DATA_FORMAT == logger::FORMATS::IAGA2002 ? "IAGA2002" : logger::DATA_FORMAT == logger::FORMATS::DMAG2026 ? "DMAG2026" : " Unknown");
     static int32_t prev_scroll_offset2 = 0; static absolute_time_t prev_update2 = nil_time; gfx::scrolling_text(buf, (buf_len + 1) * font_width, status_bar_margin + title_margin + 3 * line_margin, font_width * 8, font, base_text_color, font_width, font_height, prev_scroll_offset2, prev_update2, 100, 2, 3 * font_width);
+
+    if(ads1115::ENABLE_ADS1115) gfx::text((char*)"ADS1115 enabled", 0, status_bar_margin + title_margin + 5 * line_margin, font, positive_text_color);
 }
 
 void draw_all_page(){
@@ -1383,15 +1390,15 @@ void draw_channel_page(size_t ch){
 
         prev_mag_len = gfx::smart_text(buf, 0, status_bar_margin + title_margin + subtitle_margin, font, positive_text_color, prev_mag_len, font_width, font_height);
 
-        char* value_text = fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::FREQ ? (char*)"Freq: %.4f kHz" : (fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::ANALOG) ? (char*)"Volt.: %.4f V" : (char*)"No value";
-        float value = fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::FREQ ? fgm::get_hz(ch) / 1000.0f : (fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::ANALOG) ? fgm::get_volts(ch) : -1.0f;
+        char* value_text = fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::FREQ ? (char*)"Freq: %.4f kHz" : (fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::ANALOG || fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::ANALOG_ADS1115) ? (char*)"Volt.: %.4f V" : (char*)"No value";
+        float value = fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::FREQ ? fgm::get_hz(ch) / 1000.0f : (fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::ANALOG || fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::ANALOG_ADS1115) ? fgm::get_volts(ch) : -1.0f;
         // 'Freq: {x.xx} Hz'
         snprintf(buf, sizeof(buf), value_text, value);
 
         prev_freq_len = gfx::smart_text(buf, 0, status_bar_margin + title_margin + subtitle_margin + line_margin, font, positive_text_color, prev_freq_len, font_width, font_height);
 
-        if(fgm::SENSOR_MODES[ch] != fgm::SENSOR_MODE::DISABLED && fgm::SENSOR_MODES[ch] != fgm::SENSOR_MODE::HARMONIC){
-            // Frequency sample count progress bar
+        if(fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::FREQ || fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::ANALOG){
+            // Sample count progress bar (only applies to frequency and onboard adc sensors)
             uint8_t y = status_bar_margin + title_margin + subtitle_margin + line_margin * 3;
             uint8_t bar_width = 96;
 
