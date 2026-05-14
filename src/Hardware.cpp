@@ -726,7 +726,7 @@ static void unpack(const Block& b) {
         fgm::MEDIAN_SAMPLE_OFFSET[i]       = b.median_sample_offsets[i];
     }
 
-    logger::DATA_FORMAT     = static_cast<logger::FORMATS>(b.data_format);
+    //logger::DATA_FORMAT     = static_cast<logger::FORMATS>(b.data_format);
     logger::log_interval_ms = b.log_interval_ms;
     logger::logging_status  = static_cast<logger::LOG_STATUS>(b.logging_status);
     fgm::apply_sample_counts();

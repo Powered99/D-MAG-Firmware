@@ -8,5 +8,5 @@ namespace fgm{
 }
 namespace logger{
     uint32_t log_interval_ms = 1000;
-    FORMATS DATA_FORMAT = FORMATS::IAGA2002;
+    FORMATS DATA_FORMAT = FORMATS::DMAG2026;
 }

@@ -23,6 +23,7 @@ namespace logger{
 
     // Write entire IAGA2002 header
     void iaga_header() {
+        using namespace formats;
         char buf[72];
         fs::SD_STATUS status;
 
@@ -53,11 +54,44 @@ namespace logger{
         }
     }
 
+    // Write entire DMAG2026 header
+    void dmag_header() {
+        using namespace formats;
+        char buf[72];
+        fs::SD_STATUS status;
+
+        // Header entry lines
+        for(uint8_t i = 0; i < DMAG2026::HEADER_ENTRY_COUNT; i++){
+            DMAG2026::make_header_line(buf, sizeof(buf), DMAG2026::HEADER[i]);
+            status = fs::write_file(buf);
+            if(status == fs::SD_STATUS::SD_ERR){
+                logging_status = LOG_STATUS::ERROR;
+                return;
+            }
+        }
+        // Header comment lines
+        for(uint8_t i = 0; i < DMAG2026::COMMENT_ENTRY_COUNT; i++){
+            DMAG2026::make_header_line(buf, sizeof(buf), DMAG2026::COMMENTS[i]);
+            status = fs::write_file(buf);
+            if(status == fs::SD_STATUS::SD_ERR){
+                logging_status = LOG_STATUS::ERROR;
+                return;
+            }
+        }
+        DMAG2026::make_column_line(buf, sizeof(buf));
+        // Write column header line to file
+        status = fs::write_file(buf);
+        if(status == fs::SD_STATUS::SD_ERR){
+            logging_status = LOG_STATUS::ERROR;
+            return;
+        }
+    }
 
     // Write single IAGA2002 line
     fs::SD_STATUS iaga_line(ds3231_datetime_t dt) {
+        using namespace formats;
         char buf[72];
-        uint8_t logged_element_count = (LOG_ELEMENT_COUNT < IAGA2002::max_sensor_channels) ? LOG_ELEMENT_COUNT : IAGA2002::max_sensor_channels;
+        uint8_t logged_element_count = (LOG_ELEMENT_COUNT < IAGA2002::max_data_columns) ? LOG_ELEMENT_COUNT : IAGA2002::max_data_columns;
         float sensor_values[logged_element_count];
         for(uint8_t i = 0; i < logged_element_count; i++){
             // Dummy value
@@ -94,7 +128,46 @@ namespace logger{
         return status;
     }
 
+    // Write single DMAG2026 line
+    fs::SD_STATUS dmag_line(ds3231_datetime_t dt) {
+        using namespace formats;
+        char buf[72];
+        uint8_t logged_element_count = (LOG_ELEMENT_COUNT < IAGA2002::max_data_columns) ? LOG_ELEMENT_COUNT : IAGA2002::max_data_columns;
+        float sensor_values[logged_element_count];
+        for(uint8_t i = 0; i < logged_element_count; i++){
+            // Dummy value
+            float value = 99999.0f;
 
+            // Magnetometer data
+            if(LOG_ELEMENTS[i].element == ELEMENTS::MAG && fgm::SENSOR_STATES[LOG_ELEMENTS[i].channel] == fgm::SENSOR_STATE::ACTIVE){
+                value = fgm::get_nT(LOG_ELEMENTS[i].channel);   
+            }
+            // Magnetometer difference data
+            else if(LOG_ELEMENTS[i].element == ELEMENTS::MAG_DIFF && fgm::SENSOR_STATES[LOG_ELEMENTS[i].channel] == fgm::SENSOR_STATE::ACTIVE && fgm::SENSOR_STATES[LOG_ELEMENTS[i].channel2] == fgm::SENSOR_STATE::ACTIVE){
+                value = fgm::get_nT(LOG_ELEMENTS[i].channel) - fgm::get_nT(LOG_ELEMENTS[i].channel2);
+            }
+            // Raw frequency data
+            else if(LOG_ELEMENTS[i].element == ELEMENTS::FREQ && fgm::SENSOR_STATES[LOG_ELEMENTS[i].channel] == fgm::SENSOR_STATE::ACTIVE){
+                value = fgm::get_hz(LOG_ELEMENTS[i].channel);
+            }
+            // Raw voltage data
+            else if(LOG_ELEMENTS[i].element == ELEMENTS::VOLTS && fgm::SENSOR_STATES[LOG_ELEMENTS[i].channel] == fgm::SENSOR_STATE::ACTIVE){
+                value = fgm::get_volts(LOG_ELEMENTS[i].channel);
+            // Voltage difference data
+            }else if(LOG_ELEMENTS[i].element == ELEMENTS::VOLTS_DIFF && fgm::SENSOR_STATES[LOG_ELEMENTS[i].channel] == fgm::SENSOR_STATE::ACTIVE && fgm::SENSOR_STATES[LOG_ELEMENTS[i].channel] == fgm::SENSOR_STATE::ACTIVE){
+                value = fgm::get_volts(LOG_ELEMENTS[i].channel) - fgm::get_volts(LOG_ELEMENTS[i].channel2);
+            }
+            // Temperature data
+            else if(LOG_ELEMENTS[i].element == ELEMENTS::TEMP){
+                value = rtc::get_temperature();
+            }
+
+            sensor_values[i] = value;
+        }
+        snprintf(buf, sizeof(buf), "%s", DMAG2026::make_data_line(dt, sensor_values, logged_element_count).c_str());
+        fs::SD_STATUS status = fs::write_file(buf);    
+        return status;
+    }
 
     fs::SD_STATUS start_logging(){
         fs::init_sd();
@@ -118,7 +191,7 @@ namespace logger{
 
         switch(DATA_FORMAT){
             case FORMATS::IAGA2002: iaga_header(); break;
-            //case FORMATS::DMAG2026: dmag_header(); break;
+            case FORMATS::DMAG2026: dmag_header(); break;
         }
         //}
         logging_status = (sd_status == fs::SD_STATUS::SD_ERR) ? LOG_STATUS::ERROR : LOG_STATUS::LOGGING;
@@ -140,7 +213,7 @@ namespace logger{
 
         switch(DATA_FORMAT){
             case FORMATS::IAGA2002: status = iaga_line(dt); break; // iaga_line
-            //case FORMATS::DMAG2026: break; // dmag_line WIP
+            case FORMATS::DMAG2026: status = dmag_line(dt); break; // dmag_line
         };
         
         // start new file when new hour starts

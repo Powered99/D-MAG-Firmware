@@ -1473,10 +1473,10 @@ namespace logging{
         if(logger::logging_status == logger::LOG_STATUS::LOGGING){
             
             snprintf(buf, sizeof(buf), "");
-            for(uint8_t i = 0; i < LOG_ELEMENT_COUNT; i++){
+            for(uint8_t i = 0; i < formats::LOG_ELEMENT_COUNT; i++){
                 char ch_buf[7];
                 strcat(buf,(i == 0) ? "" : ", ");
-                snprintf(ch_buf, sizeof(ch_buf), "%s", LOG_ELEMENTS[i].label);
+                snprintf(ch_buf, sizeof(ch_buf), "%s", formats::LOG_ELEMENTS[i].label);
                 strcat(buf, ch_buf);
             }
             gfx::text(buf, 0, y, font, positive_text_color);

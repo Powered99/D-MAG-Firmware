@@ -12,7 +12,67 @@
 #include <functional>
 #include <cstring>
 
-namespace IAGA2002{
+namespace formats{
+    std::string get_reported(){
+        std::string reported = "";
+        uint8_t upper_bound = (formats::LOG_ELEMENT_COUNT < 4) ? formats::LOG_ELEMENT_COUNT : 4;
+        for (uint8_t i = 0; i < upper_bound; i++) {
+            reported += formats::LOG_ELEMENTS[i].label;
+            reported += " ";
+        }
+        return reported;
+    }
+
+    uint8_t get_active_magnetometer_count(){
+        uint8_t count = 0;
+        for (int ch = 0; ch < fgm::SENSOR_CH_COUNT; ch++) {
+            if (fgm::SENSOR_MODES[ch] != fgm::SENSOR_MODE::DISABLED) count++;
+        }
+        return count;
+    }
+
+    std::string get_str_magnetometer_count(){
+        return std::to_string(get_active_magnetometer_count());
+    }
+
+    std::string get_sensor_samples(){
+        char buf[64];
+        int offset = 0;
+        offset += snprintf(buf + offset, sizeof(buf) - offset, "Samples: ");
+
+        for (uint8_t i = 0; i < formats::LOG_ELEMENT_COUNT; i++) {
+            if (formats::LOG_ELEMENTS[i].element != formats::ELEMENTS::MAG || fgm::SENSOR_MODES[formats::LOG_ELEMENTS[i].channel] == fgm::SENSOR_MODE::DISABLED) continue;
+            std::string state_str = (fgm::SENSOR_STATES[formats::LOG_ELEMENTS[i].channel] == fgm::SENSOR_STATE::INACTIVE) ? "inactive" : "active";
+            offset += snprintf(buf + offset, sizeof(buf) - offset, "%sX%s: %s", i == 0 ? "" : ", ", std::to_string(formats::LOG_ELEMENTS[i].channel + 1).c_str(), std::to_string(fgm::SAMPLE_COUNT[formats::LOG_ELEMENTS[i].channel]).c_str());
+        }
+        return std::string(buf);
+    }
+    std::string get_sensor_median_samples(){
+        char buf[64];
+        int offset = 0;
+        offset += snprintf(buf + offset, sizeof(buf) - offset, "Median Samples: ");
+
+        for (uint8_t i = 0; i < formats::LOG_ELEMENT_COUNT; i++) {
+            if (formats::LOG_ELEMENTS[i].element != formats::ELEMENTS::MAG || fgm::SENSOR_MODES[formats::LOG_ELEMENTS[i].channel] == fgm::SENSOR_MODE::DISABLED) continue;
+            std::string state_str = (fgm::SENSOR_STATES[formats::LOG_ELEMENTS[i].channel] == fgm::SENSOR_STATE::INACTIVE) ? "inactive" : "active";
+            offset += snprintf(buf + offset, sizeof(buf) - offset, "%sX%s: %s", i == 0 ? "" : ", ", std::to_string(formats::LOG_ELEMENTS[i].channel + 1).c_str(), std::to_string(fgm::MEDIAN_SAMPLE_OFFSET[formats::LOG_ELEMENTS[i].channel] * 2).c_str());
+        }
+        return std::string(buf);        
+    }
+
+    std::string get_datetime(){
+        ds3231_datetime_t dt;
+        rtc::get_datetime(&dt);
+        char buf[64];
+        int millis = static_cast<int>((rtc::get_micros() / 1000) % 1000);
+        int doy = math::day_of_year(dt);
+        snprintf(buf, sizeof(buf), "%04d-%02d-%02d %02d:%02d:%02d.%03d (day %d)",
+             dt.year, dt.month, dt.day, dt.hour, dt.minutes, dt.seconds, millis, doy);
+        return std::string(buf);
+    }
+}
+
+namespace formats::IAGA2002{
     header_line_t make_header_entry(const char* name, std::function<std::string()> callback){
         header_line_t entry;
         snprintf(entry.content, sizeof(entry.content), "%-*s %s", header_entry_name_length, name, "%s");
@@ -45,29 +105,6 @@ namespace IAGA2002{
         entry.dynamic = true;
         return entry;
     }
-
-    std::string get_reported(){
-        std::string reported = "";
-        uint8_t upper_bound = (LOG_ELEMENT_COUNT < max_sensor_channels) ? LOG_ELEMENT_COUNT : max_sensor_channels;
-        for (uint8_t i = 0; i < upper_bound; i++) {
-            reported += LOG_ELEMENTS[i].label;
-            reported += " ";
-        }
-        return reported;
-    }
-
-    uint8_t get_active_magnetometer_count(){
-        uint8_t count = 0;
-        for (int ch = 0; ch < fgm::SENSOR_CH_COUNT; ch++) {
-            if (fgm::SENSOR_MODES[ch] != fgm::SENSOR_MODE::DISABLED) count++;
-        }
-        return count;
-    }
-
-    std::string get_str_magnetometer_count(){
-        return std::to_string(get_active_magnetometer_count());
-    }
-
     // buf must be at least 72 bytes
     void make_header_line(char* buf, size_t buf_size, header_line_t line){
         char content_buf[header_content_width];
@@ -90,13 +127,13 @@ namespace IAGA2002{
         int pos = snprintf(content_buf, sizeof(content_buf), "%-32s", "DATE       TIME         DOY");
         if (pos < 0 || pos >= (int)sizeof(content_buf)) return;
 
-        uint8_t upper_bound = (LOG_ELEMENT_COUNT < max_sensor_channels) ? LOG_ELEMENT_COUNT : max_sensor_channels;
+        uint8_t upper_bound = (formats::LOG_ELEMENT_COUNT < max_data_columns) ? formats::LOG_ELEMENT_COUNT : max_data_columns;
 
         for (uint8_t i = 0; i < upper_bound; i++) {
             if (pos >= (int)sizeof(content_buf)) break;
 
             char label[32];
-            snprintf(label, sizeof(label), "%s%s", IAGA_CODE, LOG_ELEMENTS[i].label);
+            snprintf(label, sizeof(label), "%s%s", IAGA_CODE, formats::LOG_ELEMENTS[i].label);
 
             int written = snprintf(content_buf + pos, sizeof(content_buf) - pos, "%-10s", label);
             if (written < 0 || written >= (int)(sizeof(content_buf) - pos)) break;
@@ -127,17 +164,70 @@ namespace IAGA2002{
         std::string data = std::string(prefix) + columns;
         snprintf(buf, buf_size, "%-70s\n", data.c_str());
     }
-    
-    std::string get_sensor_samples(){
-        char buf[format_line_width];
-        int offset = 0;
-        offset += snprintf(buf + offset, sizeof(buf) - offset, "Samples: ");
+}
 
-        for (uint8_t i = 0; i < LOG_ELEMENT_COUNT; i++) {
-            if (LOG_ELEMENTS[i].element != ELEMENTS::MAG || fgm::SENSOR_MODES[LOG_ELEMENTS[i].channel] == fgm::SENSOR_MODE::DISABLED) continue;
-            std::string state_str = (fgm::SENSOR_STATES[LOG_ELEMENTS[i].channel] == fgm::SENSOR_STATE::INACTIVE) ? "inactive" : "active";
-            offset += snprintf(buf + offset, sizeof(buf) - offset, "%sX%s: %s", i == 0 ? "" : ", ", std::to_string(LOG_ELEMENTS[i].channel + 1).c_str(), std::to_string(fgm::SAMPLE_COUNT[LOG_ELEMENTS[i].channel]).c_str());
+namespace formats::DMAG2026{
+    IAGA2002::header_line_t make_header_entry(const char* name, std::function<std::string()> callback){
+        return IAGA2002::make_header_entry(name, callback);
+    }
+    IAGA2002::header_line_t make_header_entry(const char* name, const char* value){
+        return IAGA2002::make_header_entry(name, value);
+    }
+    IAGA2002::header_line_t make_header_comment(const char* value){
+        return IAGA2002::make_header_comment(value);
+    }
+    IAGA2002::header_line_t make_header_comment_entry(const char* comment, const char* value){
+        return IAGA2002::make_header_comment_entry(comment, value);
+    }
+    IAGA2002::header_line_t make_header_comment(const char* comment, std::function<std::string()> callback){
+        return IAGA2002::make_header_comment(comment, callback);
+    }
+
+    void make_header_line(char* buf, size_t buf_size, IAGA2002::header_line_t line){
+        formats::IAGA2002::make_header_line(buf, buf_size, line);
+    }
+
+    // buf must be at least 72 bytes
+    void make_column_line(char* buf, size_t buf_size) {
+        if (buf_size < 72) return;
+
+        char content_buf[header_content_width + 2] = {}; // + 2 for pipe and null terminator
+
+        int pos = snprintf(content_buf, sizeof(content_buf), "DOY\tTIME");
+        if (pos < 0 || pos >= (int)sizeof(content_buf)) return;
+
+        for (uint8_t i = 0; i < formats::LOG_ELEMENT_COUNT; i++) {
+            if (pos >= (int)sizeof(content_buf)) break;
+
+            char label[32];
+            snprintf(label, sizeof(label), "%s%s", IAGA_CODE, formats::LOG_ELEMENTS[i].label);
+
+            int written = snprintf(content_buf + pos, sizeof(content_buf) - pos, "\t%s", label);
+            if (written < 0 || written >= (int)(sizeof(content_buf) - pos)) break;
+            pos += written;
         }
-        return std::string(buf);
+
+        snprintf(buf, buf_size, "%-*s|\n", header_content_width + 1, content_buf); // header_content_width to account for the extra space, which in this case is left out.
+    }
+
+    std::string make_data_line(ds3231_datetime_t dt, float* data_values, uint8_t data_column_count){
+        char buf[72];
+        char prefix[64];
+        int millis = static_cast<int>((rtc::get_micros() / 1000) % 1000);
+        int doy = math::day_of_year(dt);
+        snprintf(prefix, sizeof(prefix), "%03d\t%02d:%02d:%02d.%03d", doy, dt.hour, dt.minutes, dt.seconds, millis);
+        
+        char columns[128] = {};
+        int pos = 0;
+        float val;
+
+        for (uint8_t i = 0; i < data_column_count; i++) {
+            val = data_values[i];
+            pos += snprintf(columns + pos, sizeof(columns) - pos, "\t%10.4f", val);
+        }
+        std::string data = std::string(prefix) + columns;
+        snprintf(buf, sizeof(buf), "%-70s\n", data.c_str());
+        data = std::string(buf);
+        return data;
     }
 }
