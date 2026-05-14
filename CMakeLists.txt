@@ -96,6 +96,7 @@ target_link_libraries(D-MAG-Firmware
         pico-ads1115
         )
         
+target_link_options(D-MAG-Firmware PRIVATE -Wl,--print-memory-usage)
 
 # Remove the FatFS library's rtc.c from compilation, since we're overriding with our own RTC function.
 set_source_files_properties(

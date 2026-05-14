@@ -54,14 +54,18 @@ absolute_time_t last_pwm_read_timestamp[SENSOR_CH_COUNT];
 absolute_time_t last_pwm_read_timeout[SENSOR_CH_COUNT];
 uint16_t sample_index[SENSOR_CH_COUNT] = {0};
 
-// Raw sensor output data
+static double period_samples[SENSOR_CH_COUNT][MAX_SAMPLE_COUNT];
+static int adc_samples[SENSOR_CH_COUNT][MAX_SAMPLE_COUNT];
+
 double periods[SENSOR_CH_COUNT];
-double frequencies[SENSOR_CH_COUNT];
-float voltages[SENSOR_CH_COUNT];
 
-
+double frequencies_local[SENSOR_CH_COUNT]; // Local sensor raw frequency output data (in Hz) on Core1
+float voltages_local[SENSOR_CH_COUNT]; // Local sensor raw voltage output data (in V) on Core1
 float readings_local[SENSOR_CH_COUNT]; // Local sensor magnetic output data (in nT) on Core1
-volatile float readings[SENSOR_CH_COUNT]; // synced sensor magnetic output data (in nT)
+
+volatile double frequencies[SENSOR_CH_COUNT]; // Synced sensor raw frequency output data (in Hz)
+volatile float voltages[SENSOR_CH_COUNT];   // Synced sensor raw voltage output data (in V)
+volatile float readings[SENSOR_CH_COUNT]; // Synced sensor magnetic output data (in nT)
 static spin_lock_t *readings_lock;
 
 // Initializes the sensor unless it's disabled or already initialized in the same mode.
@@ -140,8 +144,6 @@ void launch_polling(){
 
 // Frequency sensor driver
 void read_sensor_freq(uint8_t ch){
-
-    static freq_sample freq_samples[SENSOR_CH_COUNT][MAX_SAMPLE_COUNT]; // Samples in delta us
     const uint PIN = SENSOR_PINS_FREQ[ch];
 
     uint slice_num = pwm_gpio_to_slice_num(PIN);
@@ -155,8 +157,7 @@ void read_sensor_freq(uint8_t ch){
         last_pwm_read_timestamp[ch] = now; 
         last_pwm_read_timeout[ch] = now;
         // Save sample (time delta, count)
-        freq_sample sample = {difference_us, count};
-        freq_samples[ch][sample_index[ch]++] = sample;
+        period_samples[ch][sample_index[ch]++] = (double)difference_us / (double)count;
 
         SENSOR_STATES[ch] = SENSOR_STATE::ACTIVE;
 
@@ -164,15 +165,9 @@ void read_sensor_freq(uint8_t ch){
         //float frequency_sample = difference_us > 0 ? (float)count / ((float)difference_us / 1000000.0f) : 0.0f; // calculate frequency sample in Hz
 
         if(sample_index[ch] >= SAMPLE_COUNT[ch]){ // Once we reach the configured sample count
-            static double period_samples[SENSOR_CH_COUNT][MAX_SAMPLE_COUNT];
-
-            for(size_t i = 0; i < SAMPLE_COUNT[ch]; i++)
-                period_samples[ch][i] = (double)freq_samples[ch][i].delta_t / (double)freq_samples[ch][i].count;
-
-
             periods[ch] = SAMPLE_COUNT[ch] > 1 ? math::get_filtered_average(period_samples[ch], SAMPLE_COUNT[ch], MEDIAN_SAMPLE_OFFSET[ch]) : period_samples[ch][0]; // Get filtered time delta
 
-            frequencies[ch] = (1000000.0f / periods[ch]);
+            frequencies_local[ch] = (1000000.0f / periods[ch]);
             calculate_nT(ch);
             sample_index[ch] = 0;
         }
@@ -185,17 +180,20 @@ void read_sensor_freq(uint8_t ch){
 
 void read_sensor_adc(uint8_t ch){
     const int8_t PIN = SENSOR_PINS_ANALOG[ch];
+
     if(PIN == -1) return; // If analog pin unavailable, skip
+    
+    SENSOR_STATES[ch] = SENSOR_STATE::ACTIVE;
 
     adc_select_input(ch);
-    uint32_t total = 0;
-    for (int i = 0; i < SAMPLE_COUNT[ch]; i++) total += adc_read();
-    voltages[ch] = (total / (float)SAMPLE_COUNT[ch]) * ANALOG_CONVERSION_FACTOR;
-    if(voltages[ch] > 0.5){
-        SENSOR_STATES[ch] = SENSOR_STATE::ACTIVE;
+    adc_samples[ch][sample_index[ch]++] = adc_read();
+
+    if(sample_index[ch] >= SAMPLE_COUNT[ch]){
+        double filter_result = SAMPLE_COUNT[ch] > 1 ? math::get_filtered_average(adc_samples[ch], SAMPLE_COUNT[ch], MEDIAN_SAMPLE_OFFSET[ch]) : (double)adc_samples[ch][0];
+
+        voltages_local[ch] = filter_result * ANALOG_CONVERSION_FACTOR;
         calculate_nT(ch);
-    }else{
-        SENSOR_STATES[ch] = SENSOR_STATE::INACTIVE;
+        sample_index[ch] = 0;
     }
 }
 
@@ -213,9 +211,10 @@ void read_sensors(){
     uint32_t save = spin_lock_blocking(readings_lock);
     for(uint8_t ch = 0; ch < SENSOR_CH_COUNT; ch++){
         readings[ch] = readings_local[ch];
+        if(SENSOR_MODES[ch] == SENSOR_MODE::FREQ) frequencies[ch] = frequencies_local[ch];
+        else if(SENSOR_MODES[ch] == SENSOR_MODE::ANALOG) voltages[ch] = voltages_local[ch];
     }
     spin_unlock(readings_lock, save);
-    
 }
 
 void calculate_calib(uint8_t ch){
@@ -233,7 +232,7 @@ void calculate_nT(uint8_t ch){
             B_measured = periods[ch];
             break;
         case SENSOR_MODE::ANALOG:
-            B_measured = voltages[ch];
+            B_measured = voltages_local[ch];
             break;
         case SENSOR_MODE::HARMONIC: // TODO: 3rd harmonic driver W.I.P. (via I2C)
             break;
@@ -254,6 +253,24 @@ float get_nT(uint8_t ch){
     spin_unlock(readings_lock, save);
     // Return value
     return result_nT;
+}
+
+float get_volts(uint8_t ch){
+    if(SENSOR_MODES[ch] == SENSOR_MODE::ANALOG){
+        uint32_t save = spin_lock_blocking(readings_lock);
+        float result_V = voltages[ch];
+        spin_unlock(readings_lock, save);
+        return result_V;
+    }else return 0.0f;
+}
+
+double get_hz(uint8_t ch){
+    if(SENSOR_MODES[ch] == SENSOR_MODE::FREQ){
+        uint32_t save = spin_lock_blocking(readings_lock);
+        float result_Hz = frequencies[ch];
+        spin_unlock(readings_lock, save);
+        return result_Hz;
+    }else return 0.0f;
 }
 
 // Target sensor(s) have to be initialized after!

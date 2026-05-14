@@ -53,8 +53,8 @@ namespace fgm{
     extern uint16_t sample_index[SENSOR_CH_COUNT];
 
     extern double periods[SENSOR_CH_COUNT]; // delta between sensor output ticks
-    extern double frequencies[SENSOR_CH_COUNT]; // sensor output frequencies (in Hz)
-    extern float voltages[SENSOR_CH_COUNT]; // sensor output voltages (in V)
+    extern volatile double frequencies[SENSOR_CH_COUNT]; // sensor output frequencies (in Hz)
+    extern volatile float voltages[SENSOR_CH_COUNT]; // sensor output voltages (in V)
     extern volatile float readings[SENSOR_CH_COUNT]; // Sensor outputs (in nT)
     
     void init_sensor(size_t ch, SENSOR_MODE mode);
@@ -84,6 +84,8 @@ namespace fgm{
 
     void calculate_nT(uint8_t ch);
     float get_nT(uint8_t ch);
+    float get_volts(uint8_t ch);
+    double get_hz(uint8_t ch);
 }
 
 namespace ctrl{

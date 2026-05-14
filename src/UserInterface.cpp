@@ -1383,14 +1383,14 @@ void draw_channel_page(size_t ch){
 
         prev_mag_len = gfx::smart_text(buf, 0, status_bar_margin + title_margin + subtitle_margin, font, positive_text_color, prev_mag_len, font_width, font_height);
 
-        char* value_text = fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::FREQ ? (char*)"Freq: %.4f kHz" : (fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::ANALOG || fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::HARMONIC) ? (char*)"Sample.: %.4f" : (char*)"No value";
-        float value = fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::FREQ ? fgm::frequencies[ch] / 1000.0f : (fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::ANALOG || fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::HARMONIC) ? fgm::voltages[ch] : -1.0f;
+        char* value_text = fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::FREQ ? (char*)"Freq: %.4f kHz" : (fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::ANALOG) ? (char*)"Volt.: %.4f V" : (char*)"No value";
+        float value = fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::FREQ ? fgm::get_hz(ch) / 1000.0f : (fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::ANALOG) ? fgm::get_volts(ch) : -1.0f;
         // 'Freq: {x.xx} Hz'
         snprintf(buf, sizeof(buf), value_text, value);
 
         prev_freq_len = gfx::smart_text(buf, 0, status_bar_margin + title_margin + subtitle_margin + line_margin, font, positive_text_color, prev_freq_len, font_width, font_height);
 
-        if(fgm::SENSOR_MODES[ch] == fgm::SENSOR_MODE::FREQ){
+        if(fgm::SENSOR_MODES[ch] != fgm::SENSOR_MODE::DISABLED && fgm::SENSOR_MODES[ch] != fgm::SENSOR_MODE::HARMONIC){
             // Frequency sample count progress bar
             uint8_t y = status_bar_margin + title_margin + subtitle_margin + line_margin * 3;
             uint8_t bar_width = 96;
