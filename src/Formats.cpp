@@ -13,22 +13,37 @@
 #include <cstring>
 
 namespace formats{
-    std::string get_reported(){
-        std::string reported = "";
-        uint8_t upper_bound = (formats::LOG_ELEMENT_COUNT < 4) ? formats::LOG_ELEMENT_COUNT : 4;
-        for (uint8_t i = 0; i < upper_bound; i++) {
-            reported += formats::LOG_ELEMENTS[i].label;
-            reported += " ";
+    bool sensor_reported[fgm::SENSOR_CH_COUNT] = {false};
+    uint8_t reported_sensor_count = 0;
+
+    void init_sensor_metadata(){
+        for(uint8_t i = 0; i < LOG_ELEMENT_COUNT; i++){
+            ELEMENTS element = LOG_ELEMENTS[i].element;
+            bool element_invalid = (element == ELEMENTS::TEMP);
+            if(element_invalid) continue; // Skip non-channel-magnetometer related elements
+
+            uint8_t ch = LOG_ELEMENTS[i].channel;
+            fgm::SENSOR_MODE mode = fgm::SENSOR_MODES[ch];
+            
+            if(mode != fgm::SENSOR_MODE::DISABLED && !sensor_reported[ch]){
+                sensor_reported[ch] = true;
+                reported_sensor_count++;
+            }
+
+            if(!(element == ELEMENTS::MAG_DIFF || element == ELEMENTS::VOLTS_DIFF)) continue; // Only applies to elements with 2nd channel
+
+            ch = LOG_ELEMENTS[i].channel2;
+            mode = fgm::SENSOR_MODES[ch];
+
+            if(mode != fgm::SENSOR_MODE::DISABLED && !sensor_reported[ch]){
+                sensor_reported[ch] = true;
+                reported_sensor_count++;
+            }
         }
-        return reported;
     }
 
     uint8_t get_active_magnetometer_count(){
-        uint8_t count = 0;
-        for (int ch = 0; ch < fgm::SENSOR_CH_COUNT; ch++) {
-            if (fgm::SENSOR_MODES[ch] != fgm::SENSOR_MODE::DISABLED) count++;
-        }
-        return count;
+        return reported_sensor_count;
     }
 
     std::string get_str_magnetometer_count(){
@@ -40,24 +55,54 @@ namespace formats{
         int offset = 0;
         offset += snprintf(buf + offset, sizeof(buf) - offset, "Samples: ");
 
-        for (uint8_t i = 0; i < formats::LOG_ELEMENT_COUNT; i++) {
-            if (formats::LOG_ELEMENTS[i].element != formats::ELEMENTS::MAG || fgm::SENSOR_MODES[formats::LOG_ELEMENTS[i].channel] == fgm::SENSOR_MODE::DISABLED) continue;
-            std::string state_str = (fgm::SENSOR_STATES[formats::LOG_ELEMENTS[i].channel] == fgm::SENSOR_STATE::INACTIVE) ? "inactive" : "active";
-            offset += snprintf(buf + offset, sizeof(buf) - offset, "%sX%s: %s", i == 0 ? "" : ", ", std::to_string(formats::LOG_ELEMENTS[i].channel + 1).c_str(), std::to_string(fgm::SAMPLE_COUNT[formats::LOG_ELEMENTS[i].channel]).c_str());
+        uint8_t j = 0;
+        for (uint8_t ch = 0; ch < fgm::SENSOR_CH_COUNT; ch++) {
+            if(!sensor_reported[ch]) continue;
+
+            fgm::SENSOR_MODE mode = fgm::SENSOR_MODES[ch];
+            bool mode_invalid = (mode == fgm::SENSOR_MODE::ANALOG_ADS1115 || mode == fgm::SENSOR_MODE::HARMONIC);
+            if(mode_invalid) continue;
+
+            std::string state_str = (fgm::SENSOR_STATES[ch] == fgm::SENSOR_STATE::INACTIVE) ? "inactive" : "active";
+            offset += snprintf(buf + offset, sizeof(buf) - offset, "%sCH%d: %d", j++ == 0 ? "" : ", ", ch + 1, fgm::SAMPLE_COUNT[ch]);
         }
         return std::string(buf);
     }
+
     std::string get_sensor_median_samples(){
         char buf[64];
         int offset = 0;
-        offset += snprintf(buf + offset, sizeof(buf) - offset, "Median Samples: ");
+        offset += snprintf(buf + offset, sizeof(buf) - offset, "Median samples: ");
 
-        for (uint8_t i = 0; i < formats::LOG_ELEMENT_COUNT; i++) {
-            if (formats::LOG_ELEMENTS[i].element != formats::ELEMENTS::MAG || fgm::SENSOR_MODES[formats::LOG_ELEMENTS[i].channel] == fgm::SENSOR_MODE::DISABLED) continue;
-            std::string state_str = (fgm::SENSOR_STATES[formats::LOG_ELEMENTS[i].channel] == fgm::SENSOR_STATE::INACTIVE) ? "inactive" : "active";
-            offset += snprintf(buf + offset, sizeof(buf) - offset, "%sX%s: %s", i == 0 ? "" : ", ", std::to_string(formats::LOG_ELEMENTS[i].channel + 1).c_str(), std::to_string(fgm::MEDIAN_SAMPLE_OFFSET[formats::LOG_ELEMENTS[i].channel] * 2).c_str());
+        uint8_t j = 0;
+        for (uint8_t ch = 0; ch < fgm::SENSOR_CH_COUNT; ch++) {
+            if(!sensor_reported[ch]) continue;
+
+            fgm::SENSOR_MODE mode = fgm::SENSOR_MODES[ch];
+            bool mode_invalid = (mode == fgm::SENSOR_MODE::ANALOG_ADS1115 || mode == fgm::SENSOR_MODE::HARMONIC);
+            if(mode_invalid) continue;
+
+            std::string state_str = (fgm::SENSOR_STATES[ch] == fgm::SENSOR_STATE::INACTIVE) ? "inactive" : "active";
+            offset += snprintf(buf + offset, sizeof(buf) - offset, "%sCH%d: %d", j++ == 0 ? "" : ", ", ch + 1, fgm::MEDIAN_SAMPLE_OFFSET[ch] * 2);
         }
-        return std::string(buf);        
+        return std::string(buf);
+    }
+
+    std::string get_element_channels(){
+        std::string buffer = "";
+        uint8_t upper_bound = logger::DATA_FORMAT == logger::FORMATS::IAGA2002 ? IAGA2002::max_data_columns : LOG_ELEMENT_COUNT;
+        for(uint8_t i = 0; i < upper_bound; i++){
+            ELEMENTS element = LOG_ELEMENTS[i].element;
+            if(element == ELEMENTS::TEMP) continue;
+
+            if(i > 0) buffer += " ";
+            buffer += LOG_ELEMENTS[i].label;
+            buffer += "->CH"+std::to_string(LOG_ELEMENTS[i].channel);
+            if(element == ELEMENTS::MAG_DIFF || element == ELEMENTS::VOLTS_DIFF)
+                buffer += ",CH"+std::to_string(LOG_ELEMENTS[i].channel2);
+            
+        }
+        return buffer;
     }
 
     std::string get_datetime(){
@@ -69,6 +114,16 @@ namespace formats{
         snprintf(buf, sizeof(buf), "%04d-%02d-%02d %02d:%02d:%02d.%03d (day %d)",
              dt.year, dt.month, dt.day, dt.hour, dt.minutes, dt.seconds, millis, doy);
         return std::string(buf);
+    }
+
+    std::string get_reported(){
+        std::string reported = "";
+        uint8_t upper_bound = logger::DATA_FORMAT == logger::FORMATS::IAGA2002 ? IAGA2002::max_data_columns : LOG_ELEMENT_COUNT;
+        for (uint8_t i = 0; i < upper_bound; i++) {
+            reported += formats::LOG_ELEMENTS[i].label;
+            reported += " ";
+        }
+        return reported;
     }
 }
 
@@ -167,31 +222,55 @@ namespace formats::IAGA2002{
 }
 
 namespace formats::DMAG2026{
-    IAGA2002::header_line_t make_header_entry(const char* name, std::function<std::string()> callback){
-        return IAGA2002::make_header_entry(name, callback);
+    header_line_t make_header_entry(const char* name, std::function<std::string()> callback){
+        header_line_t entry;
+        snprintf(entry.content, sizeof(entry.content), "%-*s %s", header_entry_name_length, name, "%s");
+        entry.callback = callback;
+        entry.dynamic = true;
+        return entry;
     }
-    IAGA2002::header_line_t make_header_entry(const char* name, const char* value){
-        return IAGA2002::make_header_entry(name, value);
+    header_line_t make_header_entry(const char* name, const char* value){
+        header_line_t entry;
+        snprintf(entry.content, sizeof(entry.content), "%-*s %s", header_entry_name_length, name, value);
+        return entry;
     }
-    IAGA2002::header_line_t make_header_comment(const char* value){
-        return IAGA2002::make_header_comment(value);
+    header_line_t make_header_comment(const char* value){
+        header_line_t comment;
+        char buf[header_line_width];
+        snprintf(buf, sizeof(buf), "# %s", value);
+        strncpy(comment.content, buf, sizeof(comment.content));
+        return comment;
     }
-    IAGA2002::header_line_t make_header_comment_entry(const char* comment, const char* value){
-        return IAGA2002::make_header_comment_entry(comment, value);
+    header_line_t make_header_comment_entry(const char* comment, const char* value){
+        header_line_t entry;
+        snprintf(entry.content, sizeof(entry.content), "# %-*s %s", header_entry_name_length, comment, value);
+        return entry;
     }
-    IAGA2002::header_line_t make_header_comment(const char* comment, std::function<std::string()> callback){
-        return IAGA2002::make_header_comment(comment, callback);
+    header_line_t make_header_comment(const char* comment, std::function<std::string()> callback){
+        header_line_t entry;
+        snprintf(entry.content, sizeof(entry.content), "# %-*s", std::min(strlen(comment), (size_t)header_entry_name_length), comment);
+        entry.callback = callback;
+        entry.dynamic = true;
+        return entry;
+    }
+    // buf must be at least header_line_width + 2 bytes
+    void make_header_line(char* buf, size_t buf_size, header_line_t line){
+        char content_buf[header_content_width];
+        if(line.dynamic){
+            std::string value = line.callback();
+            snprintf(content_buf, sizeof(content_buf), line.content, value.c_str());
+        }else{
+            snprintf(content_buf, sizeof(content_buf), "%s", line.content);
+        }
+        
+        snprintf(buf, buf_size, "|%-*s\n", std::min(strlen(content_buf), (size_t)header_content_width), content_buf); // Construct full string (pipe, content, newline)
     }
 
-    void make_header_line(char* buf, size_t buf_size, IAGA2002::header_line_t line){
-        formats::IAGA2002::make_header_line(buf, buf_size, line);
-    }
-
-    // buf must be at least 72 bytes
+    // buf must be at least header_line_width + 2 bytes bytes
     void make_column_line(char* buf, size_t buf_size) {
-        if (buf_size < 72) return;
+        if (buf_size < header_line_width + 2) return;
 
-        char content_buf[header_content_width + 2] = {}; // + 2 for pipe and null terminator
+        char content_buf[header_content_width + 1] = {}; // + 1 for null terminator
 
         int pos = snprintf(content_buf, sizeof(content_buf), "DOY\tTIME");
         if (pos < 0 || pos >= (int)sizeof(content_buf)) return;
@@ -207,27 +286,28 @@ namespace formats::DMAG2026{
             pos += written;
         }
 
-        snprintf(buf, buf_size, "%-*s|\n", header_content_width + 1, content_buf); // header_content_width to account for the extra space, which in this case is left out.
+        snprintf(buf, buf_size, "%-*s\n", std::min(strlen(content_buf), (size_t)header_content_width), content_buf); // header_content_width to account for the extra space, which in this case is left out.
     }
 
-    std::string make_data_line(ds3231_datetime_t dt, float* data_values, uint8_t data_column_count){
-        char buf[72];
-        char prefix[64];
+    // buf must be at least data_line_width + 2 in size.
+    void make_data_line(char* buf, size_t buf_size, ds3231_datetime_t dt, float* data_values, uint8_t data_column_count){
+        
         int millis = static_cast<int>((rtc::get_micros() / 1000) % 1000);
         int doy = math::day_of_year(dt);
-        snprintf(prefix, sizeof(prefix), "%03d\t%02d:%02d:%02d.%03d", doy, dt.hour, dt.minutes, dt.seconds, millis);
+
+        char data_line[data_line_width + 2]; // 128 data line characters + new line + null terminator
+        snprintf(data_line, sizeof(data_line), "%03d\t%02d:%02d:%02d.%03d", doy, dt.hour, dt.minutes, dt.seconds, millis);
         
-        char columns[128] = {};
+        char columns[data_line_width] = {};
         int pos = 0;
         float val;
 
         for (uint8_t i = 0; i < data_column_count; i++) {
             val = data_values[i];
-            pos += snprintf(columns + pos, sizeof(columns) - pos, "\t%10.4f", val);
+            pos += snprintf(columns + pos, sizeof(columns) - pos, "\t%.4f", val);
         }
-        std::string data = std::string(prefix) + columns;
-        snprintf(buf, sizeof(buf), "%-70s\n", data.c_str());
-        data = std::string(buf);
-        return data;
+
+        std::strcat(data_line, columns);
+        snprintf(buf, buf_size, "%-*s\n", std::min((size_t)data_line_width, std::strlen(data_line)), data_line); // Crop text into 128 characters, add newline.
     }
 }

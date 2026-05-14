@@ -21,6 +21,37 @@ namespace logger{
         log_interval_ms = interval_ms;
     }
 
+    float get_element_value(uint8_t i){
+        using namespace formats;
+        // Dummy value
+        float value = 99999.0f;
+
+        // Magnetometer data
+        if(LOG_ELEMENTS[i].element == ELEMENTS::MAG && fgm::SENSOR_STATES[LOG_ELEMENTS[i].channel] == fgm::SENSOR_STATE::ACTIVE){
+            value = fgm::get_nT(LOG_ELEMENTS[i].channel);   
+        }
+        // Magnetometer difference data
+        else if(LOG_ELEMENTS[i].element == ELEMENTS::MAG_DIFF && fgm::SENSOR_STATES[LOG_ELEMENTS[i].channel] == fgm::SENSOR_STATE::ACTIVE && fgm::SENSOR_STATES[LOG_ELEMENTS[i].channel2] == fgm::SENSOR_STATE::ACTIVE){
+            value = fgm::get_nT(LOG_ELEMENTS[i].channel) - fgm::get_nT(LOG_ELEMENTS[i].channel2);
+        }
+        // Raw frequency data
+        else if(LOG_ELEMENTS[i].element == ELEMENTS::FREQ && fgm::SENSOR_STATES[LOG_ELEMENTS[i].channel] == fgm::SENSOR_STATE::ACTIVE){
+            value = fgm::get_hz(LOG_ELEMENTS[i].channel);
+        }
+        // Raw voltage data
+        else if(LOG_ELEMENTS[i].element == ELEMENTS::VOLTS && fgm::SENSOR_STATES[LOG_ELEMENTS[i].channel] == fgm::SENSOR_STATE::ACTIVE){
+            value = fgm::get_volts(LOG_ELEMENTS[i].channel);
+        // Voltage difference data
+        }else if(LOG_ELEMENTS[i].element == ELEMENTS::VOLTS_DIFF && fgm::SENSOR_STATES[LOG_ELEMENTS[i].channel] == fgm::SENSOR_STATE::ACTIVE && fgm::SENSOR_STATES[LOG_ELEMENTS[i].channel] == fgm::SENSOR_STATE::ACTIVE){
+            value = fgm::get_volts(LOG_ELEMENTS[i].channel) - fgm::get_volts(LOG_ELEMENTS[i].channel2);
+        }
+        // Temperature data
+        else if(LOG_ELEMENTS[i].element == ELEMENTS::TEMP){
+            value = rtc::get_temperature();
+        }
+        return value;
+    }
+
     // Write entire IAGA2002 header
     void iaga_header() {
         using namespace formats;
@@ -93,36 +124,11 @@ namespace logger{
         char buf[72];
         uint8_t logged_element_count = (LOG_ELEMENT_COUNT < IAGA2002::max_data_columns) ? LOG_ELEMENT_COUNT : IAGA2002::max_data_columns;
         float sensor_values[logged_element_count];
+        
         for(uint8_t i = 0; i < logged_element_count; i++){
-            // Dummy value
-            float value = 99999.0f;
-
-            // Magnetometer data
-            if(LOG_ELEMENTS[i].element == ELEMENTS::MAG && fgm::SENSOR_STATES[LOG_ELEMENTS[i].channel] == fgm::SENSOR_STATE::ACTIVE){
-                value = fgm::get_nT(LOG_ELEMENTS[i].channel);   
-            }
-            // Magnetometer difference data
-            else if(LOG_ELEMENTS[i].element == ELEMENTS::MAG_DIFF && fgm::SENSOR_STATES[LOG_ELEMENTS[i].channel] == fgm::SENSOR_STATE::ACTIVE && fgm::SENSOR_STATES[LOG_ELEMENTS[i].channel2] == fgm::SENSOR_STATE::ACTIVE){
-                value = fgm::get_nT(LOG_ELEMENTS[i].channel) - fgm::get_nT(LOG_ELEMENTS[i].channel2);
-            }
-            // Raw frequency data
-            else if(LOG_ELEMENTS[i].element == ELEMENTS::FREQ && fgm::SENSOR_STATES[LOG_ELEMENTS[i].channel] == fgm::SENSOR_STATE::ACTIVE){
-                value = fgm::get_hz(LOG_ELEMENTS[i].channel);
-            }
-            // Raw voltage data
-            else if(LOG_ELEMENTS[i].element == ELEMENTS::VOLTS && fgm::SENSOR_STATES[LOG_ELEMENTS[i].channel] == fgm::SENSOR_STATE::ACTIVE){
-                value = fgm::get_volts(LOG_ELEMENTS[i].channel);
-            // Voltage difference data
-            }else if(LOG_ELEMENTS[i].element == ELEMENTS::VOLTS_DIFF && fgm::SENSOR_STATES[LOG_ELEMENTS[i].channel] == fgm::SENSOR_STATE::ACTIVE && fgm::SENSOR_STATES[LOG_ELEMENTS[i].channel] == fgm::SENSOR_STATE::ACTIVE){
-                value = fgm::get_volts(LOG_ELEMENTS[i].channel) - fgm::get_volts(LOG_ELEMENTS[i].channel2);
-            }
-            // Temperature data
-            else if(LOG_ELEMENTS[i].element == ELEMENTS::TEMP){
-                value = rtc::get_temperature();
-            }
-
-            sensor_values[i] = value;
+            sensor_values[i] = get_element_value(i);
         }
+        
         IAGA2002::make_data_line(buf, sizeof(buf), dt, sensor_values, logged_element_count);
         fs::SD_STATUS status = fs::write_file(buf);    
         return status;
@@ -131,40 +137,12 @@ namespace logger{
     // Write single DMAG2026 line
     fs::SD_STATUS dmag_line(ds3231_datetime_t dt) {
         using namespace formats;
-        char buf[72];
-        uint8_t logged_element_count = (LOG_ELEMENT_COUNT < IAGA2002::max_data_columns) ? LOG_ELEMENT_COUNT : IAGA2002::max_data_columns;
-        float sensor_values[logged_element_count];
-        for(uint8_t i = 0; i < logged_element_count; i++){
-            // Dummy value
-            float value = 99999.0f;
-
-            // Magnetometer data
-            if(LOG_ELEMENTS[i].element == ELEMENTS::MAG && fgm::SENSOR_STATES[LOG_ELEMENTS[i].channel] == fgm::SENSOR_STATE::ACTIVE){
-                value = fgm::get_nT(LOG_ELEMENTS[i].channel);   
-            }
-            // Magnetometer difference data
-            else if(LOG_ELEMENTS[i].element == ELEMENTS::MAG_DIFF && fgm::SENSOR_STATES[LOG_ELEMENTS[i].channel] == fgm::SENSOR_STATE::ACTIVE && fgm::SENSOR_STATES[LOG_ELEMENTS[i].channel2] == fgm::SENSOR_STATE::ACTIVE){
-                value = fgm::get_nT(LOG_ELEMENTS[i].channel) - fgm::get_nT(LOG_ELEMENTS[i].channel2);
-            }
-            // Raw frequency data
-            else if(LOG_ELEMENTS[i].element == ELEMENTS::FREQ && fgm::SENSOR_STATES[LOG_ELEMENTS[i].channel] == fgm::SENSOR_STATE::ACTIVE){
-                value = fgm::get_hz(LOG_ELEMENTS[i].channel);
-            }
-            // Raw voltage data
-            else if(LOG_ELEMENTS[i].element == ELEMENTS::VOLTS && fgm::SENSOR_STATES[LOG_ELEMENTS[i].channel] == fgm::SENSOR_STATE::ACTIVE){
-                value = fgm::get_volts(LOG_ELEMENTS[i].channel);
-            // Voltage difference data
-            }else if(LOG_ELEMENTS[i].element == ELEMENTS::VOLTS_DIFF && fgm::SENSOR_STATES[LOG_ELEMENTS[i].channel] == fgm::SENSOR_STATE::ACTIVE && fgm::SENSOR_STATES[LOG_ELEMENTS[i].channel] == fgm::SENSOR_STATE::ACTIVE){
-                value = fgm::get_volts(LOG_ELEMENTS[i].channel) - fgm::get_volts(LOG_ELEMENTS[i].channel2);
-            }
-            // Temperature data
-            else if(LOG_ELEMENTS[i].element == ELEMENTS::TEMP){
-                value = rtc::get_temperature();
-            }
-
-            sensor_values[i] = value;
+        char buf[DMAG2026::data_line_width + 2];
+        float sensor_values[LOG_ELEMENT_COUNT];
+        for(uint8_t i = 0; i < LOG_ELEMENT_COUNT; i++){
+            sensor_values[i] = get_element_value(i);
         }
-        snprintf(buf, sizeof(buf), "%s", DMAG2026::make_data_line(dt, sensor_values, logged_element_count).c_str());
+        DMAG2026::make_data_line(buf, sizeof(buf), dt, sensor_values, LOG_ELEMENT_COUNT);
         fs::SD_STATUS status = fs::write_file(buf);    
         return status;
     }
@@ -188,6 +166,8 @@ namespace logger{
         snprintf(buf, sizeof(buf), "%04d%02d%02d%02d%02d%02d.txt", dt.year, dt.month, dt.day, dt.hour, dt.minutes, dt.seconds);
 
         fs::SD_STATUS sd_status = fs::open_file(fs::SD_MODE::SD_WRITE_APPEND, buf);
+
+        formats::init_sensor_metadata();
 
         switch(DATA_FORMAT){
             case FORMATS::IAGA2002: iaga_header(); break;

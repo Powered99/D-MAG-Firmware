@@ -1319,7 +1319,7 @@ void draw_info_page(){
     buf_len = strlen(buf);
     gfx::text(buf, 0, status_bar_margin + title_margin + 3 * line_margin, font, base_text_color);
     snprintf(buf, sizeof(buf), "v%s", FIRMWARE_VERSION);
-    snprintf(buf, sizeof(buf), "%s", logger::DATA_FORMAT == logger::FORMATS::IAGA2002 ? "IAGA2002" : logger::DATA_FORMAT == logger::FORMATS::DMAG2026 ? "DMAG2026" : " Unknown");
+    snprintf(buf, sizeof(buf), "%s", logger::DATA_FORMAT == logger::FORMATS::IAGA2002 ? "IAGA-2002" : logger::DATA_FORMAT == logger::FORMATS::DMAG2026 ? "DMAG-2026" : " Unknown");
     static int32_t prev_scroll_offset2 = 0; static absolute_time_t prev_update2 = nil_time; gfx::scrolling_text(buf, (buf_len + 1) * font_width, status_bar_margin + title_margin + 3 * line_margin, font_width * 8, font, base_text_color, font_width, font_height, prev_scroll_offset2, prev_update2, 100, 2, 3 * font_width);
 
     if(ads1115::ENABLE_ADS1115) gfx::text((char*)"ADS1115 enabled", 0, status_bar_margin + title_margin + 5 * line_margin, font, positive_text_color);
@@ -1377,6 +1377,8 @@ void draw_channel_page(size_t ch){
 
     }else if(mode == fgm::SENSOR_MODE::ANALOG_ADS1115 || mode == fgm::SENSOR_MODE::HARMONIC) 
         strcpy(connection_buf, (char*)"I2C");
+    else
+        strcpy(connection_buf, (char*)"N/C");
     
     snprintf(buf, sizeof(buf), "Channel %d (%s)", ch + 1, connection_buf);
     gfx::text(buf, 0, status_bar_margin + title_margin, font, subtitle_text_color);
@@ -1471,15 +1473,22 @@ namespace logging{
 
         y += subtitle_margin;
         if(logger::logging_status == logger::LOG_STATUS::LOGGING){
+            strcpy(buf, "");
             
-            snprintf(buf, sizeof(buf), "");
-            for(uint8_t i = 0; i < formats::LOG_ELEMENT_COUNT; i++){
-                char ch_buf[7];
+            uint8_t upper_bound = formats::LOG_ELEMENT_COUNT;
+            if(logger::DATA_FORMAT == logger::FORMATS::IAGA2002) upper_bound = std::min(formats::IAGA2002::max_data_columns, formats::LOG_ELEMENT_COUNT);
+
+            for(uint8_t i = 0; i < upper_bound; i++){
                 strcat(buf,(i == 0) ? "" : ", ");
-                snprintf(ch_buf, sizeof(ch_buf), "%s", formats::LOG_ELEMENTS[i].label);
-                strcat(buf, ch_buf);
+                strcat(buf, formats::LOG_ELEMENTS[i].label);
             }
-            gfx::text(buf, 0, y, font, positive_text_color);
+            size_t buf_len = strlen(buf);
+            if(buf_len * font_width < gfx::display_width){
+                gfx::text(buf, 0, y, font, positive_text_color);
+            }else{
+                static int32_t prev_scroll_offset = 0; static absolute_time_t prev_update = nil_time; gfx::scrolling_text(buf, 0, y, gfx::display_width, font, positive_text_color, font_width, font_height, prev_scroll_offset, prev_update, 100, 2, 4 * font_width);
+            }
+            
             y += line_margin;
             snprintf(buf, sizeof(buf), "Interval: %dms",logger::log_interval_ms);
             gfx::text(buf, 0, y, font, subtitle_text_color);

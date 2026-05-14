@@ -1,7 +1,7 @@
 ## THIS IS THE DEV BRANCH! The project can be buggy, crash or even not compile! Please check the stable branch for usage!
 
 # D-MAG-Firmware
-**Version: v1.9.4 DEV**  
+**Version: v1.9.6**  
 A vastly configurable and very flexible geomagnetic observatory firmware for the Raspberry Pi Pico (RP2040) microcontroller.  
 Currently supports a variety of sensors that output an analog signal or square wave (eg. FGM3-Plus/Pro).  
 It reads, processes, displays and logs data, lets you configure settings / calibrations at runtime using an intuitive and powerful UI and more.  
@@ -14,11 +14,11 @@ that some of these upcoming features or bugs could take a long time to or never 
 **Feel free to use and modify it however!** - If you do, please **credit me** in your project if you're publishing it / it's documentation.
 
 # Features:
-- Reads from 4 or more sensors (eg. FGM3-Pro/Plus, Hall-Effect, etc.), via PWM or ADCs (Auto-detects sensors on non-disabled channels)
+- Reads from 4 or more sensors (eg. FGM3-Pro/Plus, Hall-Effect, etc.), via PWM, ADCs or (if enabled in config) an ADS1115 ADC
 - Utilizes both CPU-Cores to drastically improve performance
 - Takes up to 2048 sensor samples and filters them using an averaged median array (up to 1024 filtered samples)
 - Keeps track of time and reads temperature using RTC
-- Logs data with accurate date/time on an SD card with a flexible logging system in various formats (temporarily only IAGA-2002)
+- Logs data with accurate date/time on an SD card with a flexible logging system in various formats: IAGA-2002, DMAG-2026
 - Backward compatibility with older hardware revisions
 - Full control thanks to the intuitive and powerful UI:
   - Displays sensor readings / settings, etc. in the UI
@@ -27,9 +27,7 @@ that some of these upcoming features or bugs could take a long time to or never 
 - Autonomous logger recovery from crashes / power outages using NVM flag
 
 # Upcoming features I'm working on / planning:
-- Support for ADS1115 ADCs and EAS-based DIY sensors over I2C
-- Configuration for logging raw voltage / frequency values
-- A new, flexible logging format - "DMAG-2026"
+- EAS-based DIY sensors over I2C
 - Some extra runtime settings in the settings page (like log elements and formatting configuration)
 - SD-card hot-plugging
 - UI improvements, further bugfixes and optimizations, etc.
@@ -92,8 +90,9 @@ You can still use previous revisions of the device but you'll have to change the
 
 ***WARNING:*** *Make sure the RP2040 ADCs don't receive more than 3.3V at their inputs! If your sensors output more, use a voltage divider to prevent damage.*
 
-If you need precise analog sensor readings, connect an ADS1115 to the I2C pins listed above.
-Make sure to enable the ADS1115 driver in config.hpp by setting "ENABLE_ADS1115" under the "ads1115" namespace to true.
+If you want precise analog sensor readings, connect an ADS1115 to the I2C pins listed above and
+enable the ADS1115 driver in config.hpp by setting "ENABLE_ADS1115" under the "ads1115" namespace to true.
+This is an optional feature, as most current D-MAG-Firmware compatible devices don't feature an ADS1115.
 
 ## Compile & Upload code
 Clone this repository and use VSCode with the Raspberry Pi Pico extension to import the project.  
