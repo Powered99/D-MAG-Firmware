@@ -49,11 +49,13 @@ namespace formats {
     // IAGA-2002 allows for a maximum of 4 elements.
     // For more value columns use DMAG-2026
 
-    const uint8_t LOG_ELEMENT_COUNT = 2;
+    const uint8_t LOG_ELEMENT_COUNT = 4;
 
     const element_t LOG_ELEMENTS[LOG_ELEMENT_COUNT] = {
-        {ELEMENTS::FREQ, 0, "FREQ"},
-        {ELEMENTS::VOLTS, 1, "VOLT"},
+        {ELEMENTS::MAG, 0, "X0"},
+        {ELEMENTS::MAG, 1, "X1"},
+        {ELEMENTS::MAG_DIFF, 0, "DX", 1},
+        {ELEMENTS::TEMP, 0, "TEMP"}
     };
 
     void init_sensor_metadata();

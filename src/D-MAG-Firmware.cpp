@@ -22,6 +22,7 @@
 inline void dont(){
     ui::set_page(6); // Go to Datalogger page if logging was active before reboot
     logger::start_logging(); // Recover logging state after reboot
+    nvm::save(); // Save to ensure logger flag is up-to-date
 }
 
 // Main function
@@ -33,6 +34,7 @@ int main()
     if (!nvm::load()) nvm::load_defaults(); // Load from NVM or defaults when failed
     if(logger::logging_status == logger::LOG_STATUS::ERROR){
         logger::logging_status = logger::LOG_STATUS::IDLE; // Reset logging status if it was in error state, to prevent lockout from logging
+        nvm::save(); // Save to ensure logger flag is up-to-date
     }
     rtc::init_rtc(); // Already initializes i2c, call before other i2c devices (like fgm's ADS1115 if enabled)
     fgm::init_sensors();

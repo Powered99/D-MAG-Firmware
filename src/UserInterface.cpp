@@ -173,10 +173,10 @@ namespace logging{
 
 struct page pages[PAGE_COUNT] = {
     {.title="ALL", .draw=draw_all_page},
-    {.title="CH1", .draw=[]{draw_channel_page(0);}},
-    {.title="CH2", .draw=[]{draw_channel_page(1);}},
-    {.title="CH3", .draw=[]{draw_channel_page(2);}},
-    {.title="CH4", .draw=[]{draw_channel_page(3);}},
+    {.title="CH0", .draw=[]{draw_channel_page(0);}},
+    {.title="CH1", .draw=[]{draw_channel_page(1);}},
+    {.title="CH2", .draw=[]{draw_channel_page(2);}},
+    {.title="CH3", .draw=[]{draw_channel_page(3);}},
     {.title="INFO", .draw=draw_info_page},
     {.title="LOGGER", .draw=logging::draw},
     {.title="SETTINGS", .draw=settings::draw_settings_page}
@@ -619,7 +619,7 @@ namespace settings{
                     }
                     if(ch == selected_option) ch_color = setting_selected_text_color;
                     // 'CHx: y.yy Hz'
-                    snprintf(buf, sizeof(buf), " CH%d: %s", ch+1, mode_text);
+                    snprintf(buf, sizeof(buf), " CH%d: %s", ch, mode_text);
                     prev_ch_len[ch] = gfx::smart_text(buf, 0, y, font, ch_color, prev_ch_len[ch], font_width, font_height);
                 }
                 int y = status_bar_margin + title_margin + (fgm::SENSOR_CH_COUNT + 1) * line_margin;
@@ -784,7 +784,7 @@ namespace settings{
 
                     if(ch == selected_option) ch_color = setting_selected_text_color;
                     // 'CHx: y.yy Hz'
-                    snprintf(buf, sizeof(buf), " CH%d - %s", ch+1, ch_text);
+                    snprintf(buf, sizeof(buf), " CH%d - %s", ch, ch_text);
                     prev_ch_len[ch] = gfx::smart_text(buf, 0, y, font, ch_color, prev_ch_len[ch], font_width, font_height);
                 }
                 int y = status_bar_margin + title_margin + (fgm::SENSOR_CH_COUNT + 1) * line_margin;
@@ -991,7 +991,7 @@ namespace settings{
 
                     uint16_t ch_state_color = (fgm::SENSOR_STATES[ch] == fgm::SENSOR_STATE::ACTIVE ? positive_text_color : fgm::SENSOR_STATES[ch] == fgm::SENSOR_STATE::INACTIVE ? inactive_text_color : negative_text_color);
 
-                    snprintf(buf, sizeof(buf), " CH%d: ", ch + 1);
+                    snprintf(buf, sizeof(buf), " CH%d: ", ch);
                     uint16_t color = ch_selected ? (editing_sample_count ? editing_text_color : setting_selected_text_color) : ch_state_color;
                     gfx::text(buf, 0, y, font, color);
 
@@ -1335,18 +1335,18 @@ void draw_all_page(){
         // handle inactive channels
         if (fgm::SENSOR_STATES[ch] == fgm::SENSOR_STATE::DISABLED){
             // 'CHx: Disabled'
-            snprintf(buf, sizeof(buf), "CH%d: Disabled", ch+1);
+            snprintf(buf, sizeof(buf), "CH%d: Disabled", ch);
             gfx::text(buf, 0, y, font, negative_text_color);
             continue;
         }
         if(fgm::SENSOR_STATES[ch] == fgm::SENSOR_STATE::INACTIVE){
             // 'CHx: Inactive'
-            snprintf(buf, sizeof(buf), "CH%d: Inactive", ch+1);
+            snprintf(buf, sizeof(buf), "CH%d: Inactive", ch);
             prev_ch_len[ch] = gfx::smart_text(buf, 0, y, font, inactive_text_color, prev_ch_len[ch], font_width, font_height);
             continue;
         }
         // 'CHx: y.yy Hz'
-        snprintf(buf, sizeof(buf), "CH%d: %.2f nT", ch+1, fgm::get_nT(ch));
+        snprintf(buf, sizeof(buf), "CH%d: %.2f nT", ch, fgm::get_nT(ch));
         prev_ch_len[ch] = gfx::smart_text(buf, 0, y, font, positive_text_color, prev_ch_len[ch], font_width, font_height);
     }
 }
@@ -1380,7 +1380,7 @@ void draw_channel_page(size_t ch){
     else
         strcpy(connection_buf, (char*)"N/C");
     
-    snprintf(buf, sizeof(buf), "Channel %d (%s)", ch + 1, connection_buf);
+    snprintf(buf, sizeof(buf), "Channel %d (%s)", ch, connection_buf);
     gfx::text(buf, 0, status_bar_margin + title_margin, font, subtitle_text_color);
 
     

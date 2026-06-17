@@ -60,7 +60,7 @@ add_subdirectory(lib/pico-ads1115)
 
 pico_set_program_name(D-MAG-Firmware "D-MAG-Firmware")
 
-set(FW_VERSION "1.9.6")
+set(FW_VERSION "1.9.7")
 pico_set_program_version(D-MAG-Firmware ${FW_VERSION})
 target_compile_definitions(D-MAG-Firmware PRIVATE
     FIRMWARE_VERSION="${FW_VERSION}"

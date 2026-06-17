@@ -50,6 +50,6 @@ namespace logger{
 
 namespace ads1115{
     constexpr uint64_t ADS1115_POLLING_RATE_US = 10000; // poll once every 10ms
-    constexpr bool ENABLE_ADS1115 = true; // Only enable if ADS1115 is connected in hardware.
+    constexpr bool ENABLE_ADS1115 = false; // Only enable if ADS1115 is connected in hardware.
 }
 

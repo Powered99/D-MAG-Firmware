@@ -64,7 +64,7 @@ namespace formats{
             if(mode_invalid) continue;
 
             std::string state_str = (fgm::SENSOR_STATES[ch] == fgm::SENSOR_STATE::INACTIVE) ? "inactive" : "active";
-            offset += snprintf(buf + offset, sizeof(buf) - offset, "%sCH%d: %d", j++ == 0 ? "" : ", ", ch + 1, fgm::SAMPLE_COUNT[ch]);
+            offset += snprintf(buf + offset, sizeof(buf) - offset, "%sCH%d: %d", j++ == 0 ? "" : ", ", ch, fgm::SAMPLE_COUNT[ch]);
         }
         return std::string(buf);
     }
@@ -83,7 +83,7 @@ namespace formats{
             if(mode_invalid) continue;
 
             std::string state_str = (fgm::SENSOR_STATES[ch] == fgm::SENSOR_STATE::INACTIVE) ? "inactive" : "active";
-            offset += snprintf(buf + offset, sizeof(buf) - offset, "%sCH%d: %d", j++ == 0 ? "" : ", ", ch + 1, fgm::MEDIAN_SAMPLE_OFFSET[ch] * 2);
+            offset += snprintf(buf + offset, sizeof(buf) - offset, "%sCH%d: %d", j++ == 0 ? "" : ", ", ch, fgm::MEDIAN_SAMPLE_OFFSET[ch] * 2);
         }
         return std::string(buf);
     }
